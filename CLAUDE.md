@@ -42,9 +42,10 @@ data file. No shared database, no framework — same pattern repeated four times
   Separate files so an editing session on one project can't corrupt another.
   Drive gives free revision history per file (use `keepForever: true` on
   milestone saves, e.g. "final seating chart before printing").
-- **Hosting**: existing Raspberry Pi (already hosts many other domains/services
-  — reuse existing reverse proxy / routing conventions, nothing new needed
-  there).
+- **Hosting**: existing Raspberry Pi (already hosts many other domains/
+  services). Standalone: the app container publishes to the Pi's own
+  localhost, and a plain host-nginx server block proxies to it — no shared
+  Docker network, no dependency on any other stack being up first.
 
 ## Google Drive integration
 
@@ -184,16 +185,16 @@ sysadmin access to the Pi, not guest/vendor-facing app auth.
   frameworks are more than four small static pages need, and Tailwind
   specifically would reintroduce a frontend build step the rest of this
   spec deliberately avoids.
-- **Deployment**: Docker, matching the existing Pi convention (nginx in
-  front of Docker containers already standard there). `git pull` →
-  `docker compose build` → `docker compose up -d`; container joins the
-  existing Docker network, one new nginx server block routes to it — no
-  new infra pattern introduced. Docker's `restart: unless-stopped` policy
-  covers process supervision (no separate pm2/systemd unit needed).
-  TLS terminates at nginx, same as the Pi's other services — this app
-  never handles certs directly. `Dockerfile`/`docker-compose.yml`/the nginx
-  server block are written but **not yet validated** — the image has never
-  been built or run, and the app has not been deployed to the Pi.
+- **Deployment**: Docker, standalone. `git clone` → `docker compose build` →
+  `docker compose up -d`; the container publishes `127.0.0.1:3000` (loopback
+  only), and a plain host-nginx server block (`deploy/nginx/wedding-planning.conf`)
+  proxies to it — no shared Docker network, no dependency on any other stack
+  being up first. Docker's `restart: unless-stopped` policy covers process
+  supervision (no separate pm2/systemd unit needed). TLS terminates at
+  nginx, same as the Pi's other services — this app never handles certs
+  directly. `Dockerfile`/`docker-compose.yml`/the nginx server block are
+  written but **not yet validated** — the image has never been built or run,
+  and the app has not been deployed to the Pi.
 - **Secrets**: `.env.example` committed to the repo (placeholder keys only);
   the real `.env` (dev) and `.env.production` (prod) are never committed —
   `.gitignore` excludes `.env*` except `.env.example`. On the Pi, `.env`

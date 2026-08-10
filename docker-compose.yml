@@ -1,17 +1,8 @@
 name: wedding-planning
 
-# Joins the Pi's shared `proxy` network (created by the auth stack in
-# proxy-auth/auth/compose.yml) as external — same pattern as that repo's
-# sample-app. This app is NOT behind Authelia (per CLAUDE.md: it has its own
-# JWT/role auth for guest/vendor/editor), so it's wired more like
-# auth-portal.conf (plain passthrough) than sample-app.conf (auth_request).
-#
-# No host ports published — reachability is via the docker nginx in the
-# auth stack, same as every other app on the Pi.
-
-networks:
-  proxy:
-    external: true
+# Standalone: publishes a host port directly and is reached by an nginx
+# config running on the Pi itself (see deploy/nginx/wedding-planning.conf).
+# No shared Docker network, no dependency on any other stack being up.
 
 services:
   app:
@@ -20,12 +11,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env.production
-    expose:
-      - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     volumes:
       # Drive refresh token — created by the one-time OAuth device-grant
       # approval, must be scp'd here by hand, never committed, never
       # regenerated automatically (see CLAUDE.md "First-run setup").
       - ./data:/app/data
-    networks:
-      - proxy
