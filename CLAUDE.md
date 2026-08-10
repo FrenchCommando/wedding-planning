@@ -4,9 +4,10 @@
 - Backend skeleton, auth, Drive integration — done, per spec below.
 - Seating chart — migrated off File System Access API to the backend; optimistic-lock save with plain-English conflict diff + force-overwrite. Real 175-guest data is live in the **prod** Drive folder.
 - Ceremony page — timed program outline with scroll-reveal, plus a real vertical aisle diagram (Entrance bottom → Altar top) for Processional/Recessional moments. Motion is scroll-linked (position tied to scroll offset via `getBoundingClientRect`), not timer/autoplay-based. Uses a `position:sticky` spacer-pin pattern so the page freezes while the diagram animates, then releases. "End" marker caps the timeline; page bottom padding is computed in JS so max-scroll lands exactly at End's top. Each processional-order person has a plain-text `emoji` field (default 🚶) editable in the UI — not inferred from name/role text. Rail geometry (gutter/line/dot/time-column widths) is driven by CSS custom properties with a `@media (max-width:520px)` override, so it's not fixed-desktop-pixel-only.
-- Landing page — role-aware nav, editor "preview as vendor" toggle, warm light/dark theme consistent across all three pages.
+- Landing page — role-aware nav, editor "preview as vendor" toggle, warm light/dark theme consistent across all three pages, banner link to the main wedding site (`WEDDING_SITE_URL` env var, hidden when unset).
+- Deployed — Docker (standalone, no shared network dependency) + host nginx, live on the Pi. See "Deployment" below for the actual redeploy commands.
 
-**Not yet built:** playlist, transportation sub-projects as backend-integrated pages (playlist exists only as a standalone client-only HTML file, spec'd below but not wired to `/api`; transportation not started). Docker/nginx config files exist (`Dockerfile`, `docker-compose.yml`, `deploy/nginx/wedding-planning.conf`) but the image has never been built or run, and the app has not been deployed to the Pi — those files are written, not validated.
+**Not yet built:** playlist, transportation sub-projects as backend-integrated pages (playlist exists only as a standalone client-only HTML file, spec'd below but not wired to `/api`; transportation not started).
 
 **Room floor-plan outline data:** room objects in `seating.json` can carry `x1/y1/x2/y2` (fractional plan coordinates) to draw an outline; rooms without them just render with no outline. This is real venue data, so it's seeded once from a local, gitignored `data/venue-seed.json` (see `data/venue-seed.json.example` for the shape) by `setup-prod.ts`/`setup-dev.ts` on first file creation only — never re-seeded, never hardcoded in the HTML. There's deliberately no in-app UI to add/resize rooms: the seating editor is for seating guests, not surveying the venue, so room geometry stays data-only, edited by hand on Drive if it ever needs to change after first setup.
 
@@ -185,16 +186,24 @@ sysadmin access to the Pi, not guest/vendor-facing app auth.
   frameworks are more than four small static pages need, and Tailwind
   specifically would reintroduce a frontend build step the rest of this
   spec deliberately avoids.
-- **Deployment**: Docker, standalone. `git clone` → `docker compose build` →
-  `docker compose up -d`; the container publishes `127.0.0.1:3000` (loopback
-  only), and a plain host-nginx server block (`deploy/nginx/wedding-planning.conf`)
-  proxies to it — no shared Docker network, no dependency on any other stack
-  being up first. Docker's `restart: unless-stopped` policy covers process
-  supervision (no separate pm2/systemd unit needed). TLS terminates at
-  nginx, same as the Pi's other services — this app never handles certs
-  directly. `Dockerfile`/`docker-compose.yml`/the nginx server block are
-  written but **not yet validated** — the image has never been built or run,
-  and the app has not been deployed to the Pi.
+- **Deployment**: Docker, standalone, **live on the Pi**. The container
+  publishes `127.0.0.1:3000` (loopback only), and a plain host-nginx server
+  block (`deploy/nginx/wedding-planning.conf`) proxies to it — no shared
+  Docker network, no dependency on any other stack being up first. Docker's
+  `restart: unless-stopped` policy covers process supervision (no separate
+  pm2/systemd unit needed). TLS terminates at nginx, same as the Pi's other
+  services — this app never handles certs directly.
+  - **First-time setup on the Pi**: `git clone` the repo, `scp` `.env.production`
+    and `data/drive-token.json` in (both gitignored, never committed), then
+    `docker compose build` → `docker compose up -d`. Wire nginx per
+    `deploy/nginx/wedding-planning.conf`'s own header comment, fill in the
+    real domain there (not in the repo), reload nginx.
+  - **Redeploying after a code change**: `git pull` → `docker compose build`
+    → `docker compose up -d` — Compose recreates the container automatically
+    once the built image changes, no extra flags needed.
+  - **Redeploying after an env-only change** (e.g. rotating a password,
+    changing `VENUE_NAME`/`WEDDING_SITE_URL`): `scp` the updated
+    `.env.production` in, then just `docker compose up -d` — no rebuild.
 - **Secrets**: `.env.example` committed to the repo (placeholder keys only);
   the real `.env` (dev) and `.env.production` (prod) are never committed —
   `.gitignore` excludes `.env*` except `.env.example`. On the Pi, `.env`
