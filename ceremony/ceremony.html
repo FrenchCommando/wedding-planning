@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ceremony</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --bg:#f6f1e7; --panel:#fffdf8; --ink:#2b2620; --muted:#8a8071;
+    --line:#e2d8c3; --accent:#a9744f; --accent-ink:#fff; --danger:#b2483c;
+    --shadow:0 1px 2px rgba(60,45,20,.05),0 10px 30px rgba(60,45,20,.08);
+    /* Timeline rail geometry — one set of variables driving the gutter,
+       the line, the dot, and the time column, so the whole rail can shrink
+       together on narrow screens instead of each piece drifting apart. */
+    --gutter:100px; --line-x:70px; --dot-x:65px; --time-w:60px;
+  }
+  @media (max-width:520px){
+    :root{ --gutter:72px; --line-x:52px; --dot-x:46px; --time-w:42px; }
+    .moment .time{font-size:11px;}
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1b1712; --panel:#26221b; --ink:#efe9dc; --muted:#a39a87;
+      --line:#3a3428; --accent:#c99361; --accent-ink:#20160c; --danger:#e0685c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box;}
+  /* Bottom padding must be viewport-relative, not a fixed px value — the
+     page needs enough trailing scroll room for the very last element
+     ("End") to reach the top of the viewport on any screen size. */
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:40px 20px 100vh;background:var(--bg);color:var(--ink);}
+  h1{text-align:center;font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-weight:400;font-size:28px;margin:0 0 4px;}
+  .sub{text-align:center;color:var(--muted);margin-bottom:60px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;max-width:640px;margin:0 auto 20px;}
+  .topbar a{color:var(--muted);text-decoration:none;font-size:13px;}
+  button{padding:7px 14px;border:none;border-radius:6px;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:600;cursor:pointer;}
+  button.secondary{background:transparent;color:inherit;border:1px solid var(--line);font-weight:400;}
+  button.danger{background:var(--danger);color:#fff;}
+
+  .timeline{max-width:640px;margin:0 auto;position:relative;}
+  .timeline::before{content:"";position:absolute;left:var(--line-x);top:0;bottom:0;width:2px;background:var(--line);}
+  .moment{position:relative;padding:0 0 44px var(--gutter);opacity:0;transform:translateY(24px);transition:opacity .6s ease, transform .6s ease;}
+  .moment.visible{opacity:1;transform:none;}
+  .moment .time{position:absolute;left:0;top:2px;width:var(--time-w);text-align:right;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .moment .dot{position:absolute;left:var(--dot-x);top:6px;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--bg);}
+  .moment h2{font-size:18px;margin:0 0 6px;font-weight:600;}
+  /* Rail header (time/dot/h2) for the processional/recessional moment —
+     same element, same position, never restyled. It just additionally
+     becomes sticky so it's the thing that stays pinned at the top for the
+     whole aisle pin. The negative-margin/padding pair re-creates .moment's
+     own coordinate space for this element (since sticky makes it the new
+     positioned ancestor for the absolute .time/.dot inside it) so they land
+     in exactly the same visual spot as an ordinary, non-pinned moment. */
+  .rail-sticky{position:sticky;top:0;z-index:2;background:var(--bg);margin-left:calc(-1 * var(--gutter));padding:24px 0 0 var(--gutter);min-height:30px;}
+  /* .time/.dot are position:absolute, so they're positioned against the
+     ancestor's padding-box edge — which sits right after the border,
+     UNAFFECTED by how much padding-top the ancestor itself has (padding is
+     drawn inside that box). rail-sticky's own padding-top:24px therefore
+     pushes the h2 (normal flow) down but leaves .time/.dot exactly where
+     they'd be with no padding at all — hence the misalignment. Shifting
+     their `top` by the same 24px keeps everything on one visual row. */
+  .rail-sticky .time{top:26px;}
+  .rail-sticky .dot{top:30px;}
+  .moment p{margin:0;color:var(--muted);font-size:14px;line-height:1.5;}
+  /* .dot is position:absolute, so it ignores this element's own
+     padding-top (same reason .rail-sticky needed a matching offset) —
+     shift it down by the same amount so it stays aligned with "End". */
+  .end-of-timeline{padding-top:20px;}
+  .end-of-timeline .dot{top:26px;}
+  .moment .participants{margin-top:8px;font-size:12px;color:var(--accent);}
+
+  /* Aisle diagram: a VERTICAL path from Entrance (top) to Altar (bottom) —
+     matches the page's own scroll direction. Each person is a marker whose
+     position is driven directly by scroll offset (scroll-linked, not a
+     timed autoplay), computed in JS via updateAislePositions().
+
+     While the walk is in progress, the page itself pins in place (sticky)
+     and the extra scroll distance in .aisle-pin-spacer drives the walkers
+     instead of scrolling the page — like the "outside freezes, inside
+     advances" of a scrollytelling section — then releases normally once
+     the walk finishes. */
+  .aisle-pin-spacer{position:relative;}
+  /* Fills the whole viewport while pinned — this is what actually makes
+     "outside" content unable to peek through above or below; a sticky box
+     smaller than the viewport lets neighboring content show at the same
+     time, which defeats the freeze. */
+  /* No forced height:100vh — the spacer (sized in JS) already reserves
+     enough scroll distance to keep the next moment off-screen regardless
+     of how tall this box actually renders; forcing full-viewport height
+     just left a big empty same-color gap under short content. */
+  .aisle-pin-sticky{position:sticky;top:0;padding:8px 0 24px;background:var(--bg);}
+  .aisle-wrap{margin:0 auto;width:100%;max-width:480px;}
+  .aisle{position:relative;width:100%;height:min(30vh,260px);margin:0 auto;}
+  .aisle::before{content:"";position:absolute;top:0;bottom:0;left:30px;width:3px;background:repeating-linear-gradient(180deg,var(--line) 0 8px,transparent 8px 16px);}
+  .aisle .endpoint{position:absolute;left:46px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
+  /* Altar is the destination people walk UP toward, so it sits at the top
+     of the track; Entrance (where they start) is at the bottom. */
+  .aisle .endpoint.start{bottom:-2px;}
+  .aisle .endpoint.end{top:-2px;}
+  .aisle .walker{position:absolute;left:6px;top:0;font-size:22px;will-change:transform,opacity;}
+  .aisle-timeline{list-style:none;margin:14px 0 0;padding:0;font-size:13px;}
+  .aisle-timeline li{display:flex;gap:10px;padding:5px 0;color:var(--muted);opacity:.4;transition:opacity .3s;}
+  .aisle-timeline li.active{opacity:1;color:var(--ink);}
+  .aisle-timeline .t{width:44px;flex:none;color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;}
+  .aisle-timeline .role{color:var(--muted);font-size:11px;margin-left:6px;}
+
+  .editRow{position:relative;padding:0 0 20px var(--gutter);}
+  .editRow input,.editRow textarea{display:block;width:100%;margin-bottom:6px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font-size:14px;font-family:inherit;}
+  .editRow textarea{resize:vertical;min-height:44px;}
+  .editRow .rowbar{display:flex;gap:8px;margin-top:6px;}
+  .editRow .time-input{width:80px;position:absolute;left:0;top:0;}
+
+  .procEditRow{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .procEditRow input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font-size:13px;font-family:inherit;}
+  .procEditRow .p-emoji{width:40px;text-align:center;}
+  .procEditRow .p-name{flex:2;}
+  .procEditRow .p-role{flex:2;}
+  .procEditRow .p-start{width:70px;}
+  .procEditRow button{width:auto;padding:5px 9px;}
+
+  .addBar{max-width:640px;margin:20px auto;text-align:center;}
+  #err{color:var(--danger);text-align:center;margin-bottom:20px;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/">&larr; Home</a>
+  <span id="roleTag" style="font-size:12px;opacity:.6"></span>
+  <span id="editControls" style="display:none"><button class="secondary" id="editToggle">Edit</button></span>
+</div>
+<h1>Ceremony</h1>
+<div class="sub" id="subTitle"></div>
+<div id="err"></div>
+<div class="timeline" id="timeline"></div>
+<div class="addBar" id="addBar" style="display:none"><button class="secondary" id="addMoment">+ Add moment</button></div>
+
+<script>
+async function api(path,opts){
+  return fetch("/api"+path,{credentials:"same-origin",headers:{"Content-Type":"application/json"},...opts});
+}
+async function promptForLogin(){
+  while(true){
+    const password=prompt("Editor password:");
+    if(password===null)throw new Error("login cancelled");
+    const res=await api("/login/editor",{method:"POST",body:JSON.stringify({password})});
+    if(res.ok)return;
+    alert("Wrong password — try again.");
+  }
+}
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+let data=null, revisionId=null, editing=false, session=null;
+
+async function loadSession(){
+  const res=await api("/whoami");
+  const body=await res.json();
+  session=body.session;
+}
+
+async function loadCeremony(){
+  let res=await api("/ceremony");
+  if(res.status===403){
+    await promptForLogin();
+    await loadSession();
+    res=await api("/ceremony");
+  }
+  if(!res.ok)throw new Error("failed to load ceremony data");
+  const body=await res.json();
+  data=body.data;
+  revisionId=body.revisionId;
+}
+
+// Moments titled "processional" or "recessional" (case-insensitive) get the
+// aisle diagram + timeline. Recessional reuses the same processionalOrder
+// data reversed (couple exits first, wedding party follows), walking back
+// from the altar toward the entrance — no separate data field needed.
+function isProcessional(title){return /processional/i.test(title||"")&&!/recessional/i.test(title||"");}
+function isRecessional(title){return /recessional/i.test(title||"");}
+function fmtOffset(sec){const m=Math.floor(sec/60),s=sec%60;return m?`${m}:${String(s).padStart(2,"0")}`:`0:${String(s).padStart(2,"0")}`;}
+
+// Reverses the walking order while preserving the original pacing between
+// people (the gaps between consecutive startAt values), so the recessional
+// isn't just instantly-reversed timing.
+function computeRecessionalOrder(){
+  const sorted=(data.processionalOrder||[]).slice().sort((a,b)=>a.startAt-b.startAt);
+  if(!sorted.length)return [];
+  const gaps=sorted.slice(1).map((p,i)=>p.startAt-sorted[i].startAt).reverse();
+  const reversedPeople=sorted.slice().reverse();
+  let cum=0;
+  return reversedPeople.map((p,i)=>{
+    if(i>0)cum+=gaps[i-1];
+    return {...p,startAt:cum};
+  });
+}
+
+// `startAt`/WALK_DURATION are real planned seconds within the processional
+// (the editor's actual pacing), not a playback duration — there's no timer
+// or autoplay anywhere here. They only exist to convert into scroll-pixel
+// distance (via PIN_PX_PER_SEC below), which is what actually drives motion.
+const WALK_DURATION=6; // planned seconds each person takes to walk the aisle
+
+function aisleHTML(reverse){
+  const order=reverse?computeRecessionalOrder():(data.processionalOrder||[]).slice().sort((a,b)=>a.startAt-b.startAt);
+  if(!order.length)return "";
+  const maxStart=Math.max(...order.map(p=>p.startAt));
+  const totalDuration=maxStart+WALK_DURATION;
+
+  const walkers=order.map(p=>{
+    const emoji=p.emoji||"🚶";
+    return `<span class="walker" data-start="${p.startAt}" data-dur="${WALK_DURATION}" data-reverse="${reverse?1:0}" data-id="${p.id}-${reverse?"r":"p"}">${emoji}</span>`;
+  }).join("");
+
+  const rows=order.map(p=>`
+    <li data-id="${p.id}-${reverse?"r":"p"}">
+      <span class="t">${fmtOffset(p.startAt)}</span>
+      <span>${esc(p.name)}${p.role?`<span class="role">${esc(p.role)}</span>`:""}</span>
+    </li>
+  `).join("");
+
+  return `
+    <div class="aisle-pin-spacer">
+      <div class="aisle-pin-sticky">
+        <div class="aisle-body">
+          <div class="aisle-wrap" data-total="${totalDuration}">
+            <div class="aisle">${walkers}<span class="endpoint start">Entrance</span><span class="endpoint end">Altar</span></div>
+            <ul class="aisle-timeline">${rows}</ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Scroll-pixels per planned second — the only place real-world "seconds"
+// get converted into scroll distance. No timer reads this; it's purely a
+// unit conversion used once, when sizing the spacer.
+const PIN_PX_PER_SEC=6;
+
+// Sizes each spacer to (sticky content height + walk duration's worth of
+// extra scroll). While the spacer's top has scrolled past the viewport top
+// but its bottom hasn't yet, position:sticky holds the content in place —
+// exactly the window in which the page should read as "frozen".
+//
+// The diagram's own pin stacks BELOW the rail title's pin (which is a
+// separate, independent sticky element right before the spacer, at
+// top:0) — so both stay on screen together, the title pinned above the
+// diagram, rather than the two competing for the same top:0 spot.
+function layoutAislePins(){
+  document.querySelectorAll(".aisle-pin-spacer").forEach(spacer=>{
+    const sticky=spacer.querySelector(".aisle-pin-sticky");
+    const wrap=spacer.querySelector(".aisle-wrap");
+    const total=Number(wrap.dataset.total||0);
+    const extra=Math.round(total*PIN_PX_PER_SEC);
+
+    const moment=spacer.closest(".moment");
+    const railHeader=moment ? moment.querySelector(".rail-sticky") : null;
+    const headerHeight=railHeader ? railHeader.offsetHeight : 0;
+    sticky.style.top=headerHeight+"px";
+
+    // headerHeight is NOT added here — the rail header is a separate
+    // sibling sitting before the spacer in normal flow, so it already
+    // reserves its own space; counting it again here would double it.
+    //
+    // position:sticky only guarantees "nothing else visible at the same
+    // time" for as long as its containing block (.moment) stays at least
+    // one viewport tall — this is a hard requirement of how sticky works,
+    // not a style choice. Below that, the next moment legitimately shows
+    // up before the pin finishes. So the spacer must reserve at least a
+    // full viewport regardless of how short the content itself is; any
+    // shortfall becomes extra scroll distance, not a taller visible box.
+    const naturalHeight=sticky.offsetHeight+extra;
+    const minHeight=window.innerHeight-headerHeight;
+    spacer.style.height=Math.max(naturalHeight,minHeight)+"px";
+  });
+}
+
+// The CSS padding-bottom is just a "definitely enough" fallback. The exact
+// amount needed so max-scroll lands with "End"'s top exactly at the
+// viewport top (not past it) depends on End's real height and the actual
+// viewport height, so it has to be computed, not a fixed value.
+function layoutEndPadding(){
+  const endEl=document.querySelector(".end-of-timeline");
+  if(!endEl)return;
+  const pad=Math.max(0, window.innerHeight-endEl.offsetHeight);
+  document.body.style.paddingBottom=pad+"px";
+}
+
+// Scroll-linked positioning: progress is how far scroll has moved through
+// the spacer's pinned window (0 before pinning starts, 1 after it ends) —
+// not how far the diagram itself has moved, since it doesn't move while
+// pinned. Scrolling up runs the walk backward. No timers, no autoplay.
+// Accounts for the sticky element's own `top` offset (it isn't glued to
+// the viewport's literal top edge, so the pin math has to match that).
+function pinProgress(spacer, sticky){
+  const rect=spacer.getBoundingClientRect();
+  const extra=spacer.offsetHeight-sticky.offsetHeight;
+  const topOffset=parseFloat(getComputedStyle(sticky).top)||0;
+  if(extra<=0)return rect.top<=topOffset?1:0;
+  return Math.min(1, Math.max(0, (topOffset-rect.top)/extra));
+}
+
+function updateAislePositions(){
+  document.querySelectorAll(".aisle-pin-spacer").forEach(spacer=>{
+    const sticky=spacer.querySelector(".aisle-pin-sticky");
+    const wrap=spacer.querySelector(".aisle-wrap");
+    const total=Number(wrap.dataset.total||0);
+    if(!total)return;
+    const aisleEl=wrap.querySelector(".aisle");
+    const trackHeight=aisleEl.clientHeight-24; // leave room for the walker's own height
+    const progress=pinProgress(spacer, sticky);
+    const elapsed=progress*total;
+
+    wrap.querySelectorAll(".walker").forEach(w=>{
+      const delay=Number(w.dataset.start), dur=Number(w.dataset.dur), reverse=w.dataset.reverse==="1";
+      let local=(elapsed-delay)/dur;
+      local=Math.min(1, Math.max(0, local));
+      // Forward (processional): bottom (Entrance) -> top (Altar).
+      // Reverse (recessional): top (Altar) -> bottom (Entrance).
+      const y=(reverse?local:(1-local))*trackHeight;
+      const bob=(local>0&&local<1)?Math.sin(local*Math.PI*8)*2:0;
+      const fadeIn=Math.min(1, local/0.08);
+      const fadeOut=Math.min(1, (1-local)/0.08);
+      const opacity=(local<=0||local>=1)?0:Math.min(fadeIn,fadeOut);
+      w.style.transform=`translateY(${y+bob}px)`;
+      w.style.opacity=opacity;
+    });
+    wrap.querySelectorAll(".aisle-timeline li").forEach(li=>{
+      const w=wrap.querySelector(`.walker[data-id="${li.dataset.id}"]`);
+      const delay=Number(w.dataset.start), dur=Number(w.dataset.dur);
+      const local=(elapsed-delay)/dur;
+      li.classList.toggle("active", local>=0 && local<=1);
+    });
+  });
+}
+
+let aisleLoopStarted=false;
+function startAisleScrollLoop(){
+  if(aisleLoopStarted)return;
+  aisleLoopStarted=true;
+  function tick(){ updateAislePositions(); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+}
+
+function renderView(){
+  const el=document.getElementById("timeline");
+  if(!data.moments.length){el.innerHTML='<p style="text-align:center;color:var(--muted)">No moments yet.</p>';}
+  else{
+    el.innerHTML=data.moments.map(m=>{
+      const hasAisle=isProcessional(m.title)||isRecessional(m.title);
+      // The rail header (time/dot/h2) is never moved or restyled — same
+      // element, same position, always. For processional/recessional it
+      // additionally gets position:sticky (see .rail-sticky) so it's the
+      // thing that stays pinned at top through the whole aisle pin, stacked
+      // above the diagram's own pin rather than replaced by it.
+      return `
+      <div class="moment">
+        <div class="${hasAisle?"rail-sticky":""}">
+          <div class="time">${esc(m.time)}</div>
+          <div class="dot"></div>
+          <h2>${esc(m.title)}</h2>
+          ${m.description?`<p>${esc(m.description)}</p>`:""}
+          ${m.participants?`<div class="participants">${esc(m.participants)}</div>`:""}
+        </div>
+        ${isProcessional(m.title)?aisleHTML(false):isRecessional(m.title)?aisleHTML(true):""}
+      </div>
+    `;
+    }).join("")+`
+      <div class="moment end-of-timeline">
+        <div class="dot"></div>
+        <h2>End</h2>
+      </div>
+    `;
+  }
+  document.getElementById("addBar").style.display="none";
+  observeMoments();
+}
+
+function renderEdit(){
+  const el=document.getElementById("timeline");
+  el.innerHTML=data.moments.map((m,i)=>`
+    <div class="editRow" data-i="${i}">
+      <input class="time-input" data-field="time" value="${esc(m.time)}" placeholder="Time">
+      <div style="padding-left:0">
+        <input data-field="title" value="${esc(m.title)}" placeholder="Title">
+        <textarea data-field="description" placeholder="Description">${esc(m.description||"")}</textarea>
+        <input data-field="participants" value="${esc(m.participants||"")}" placeholder="Participants">
+        <div class="rowbar">
+          <button class="danger" data-action="remove">Remove</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+  el.querySelectorAll(".editRow").forEach(row=>{
+    const i=Number(row.dataset.i);
+    row.querySelectorAll("[data-field]").forEach(inp=>{
+      inp.addEventListener("input",()=>{data.moments[i][inp.dataset.field]=inp.value;});
+    });
+    row.querySelector('[data-action="remove"]').addEventListener("click",()=>{
+      data.moments.splice(i,1);renderEdit();
+    });
+  });
+  el.insertAdjacentHTML("beforeend", processionalOrderEditHTML());
+  wireProcessionalOrderEdit(el);
+  document.getElementById("addBar").style.display="block";
+}
+
+function processionalOrderEditHTML(){
+  const order=data.processionalOrder||[];
+  const rows=order.map((p,i)=>`
+    <div class="procEditRow" data-i="${i}">
+      <input class="p-start" data-field="startAt" type="number" min="0" step="1" value="${p.startAt}" placeholder="Sec">
+      <input class="p-emoji" data-field="emoji" value="${esc(p.emoji||"")}" placeholder="🚶">
+      <input class="p-name" data-field="name" value="${esc(p.name)}" placeholder="Name">
+      <input class="p-role" data-field="role" value="${esc(p.role||"")}" placeholder="Role (optional)">
+      <button class="danger" data-action="removeP">×</button>
+    </div>
+  `).join("");
+  return `
+    <div class="editRow">
+      <div style="padding-left:0">
+        <h2 style="font-size:14px;margin:0 0 8px">Processional order (who walks in, and when — seconds after the processional starts)</h2>
+        <div id="procRows">${rows}</div>
+        <div class="rowbar"><button class="secondary" id="addProc" style="width:auto">+ Add person</button></div>
+      </div>
+    </div>
+  `;
+}
+
+function wireProcessionalOrderEdit(el){
+  if(!data.processionalOrder)data.processionalOrder=[];
+  const rowsEl=el.querySelector("#procRows");
+  rowsEl.querySelectorAll(".procEditRow").forEach(row=>{
+    const i=Number(row.dataset.i);
+    row.querySelectorAll("[data-field]").forEach(inp=>{
+      inp.addEventListener("input",()=>{
+        const val=inp.dataset.field==="startAt"?Number(inp.value)||0:inp.value;
+        data.processionalOrder[i][inp.dataset.field]=val;
+      });
+    });
+    row.querySelector('[data-action="removeP"]').addEventListener("click",()=>{
+      data.processionalOrder.splice(i,1);renderEdit();
+    });
+  });
+  const addBtn=el.querySelector("#addProc");
+  if(addBtn)addBtn.addEventListener("click",()=>{
+    const nextStart=data.processionalOrder.length
+      ? Math.max(...data.processionalOrder.map(p=>p.startAt))+8
+      : 0;
+    data.processionalOrder.push({id:(data.nextId||1),name:"",role:"",emoji:"🚶",startAt:nextStart});
+    data.nextId=(data.nextId||1)+1;
+    renderEdit();
+  });
+}
+
+function observeMoments(){
+  // Fade/slide-in reveal for moment text stays IntersectionObserver-driven
+  // (a one-time trigger is right for that). The aisle walkers are separate —
+  // scroll-linked continuously via startAisleScrollLoop(), not gated by
+  // whether the moment has "become visible" yet.
+  const io=new IntersectionObserver(entries=>{
+    for(const e of entries)if(e.isIntersecting)e.target.classList.add("visible");
+  },{threshold:.2});
+  document.querySelectorAll(".moment").forEach(m=>io.observe(m));
+  if(document.querySelector(".aisle-pin-spacer")){
+    layoutAislePins();
+    startAisleScrollLoop();
+    window.addEventListener("resize", layoutAislePins);
+  }
+  layoutEndPadding();
+  window.addEventListener("resize", layoutEndPadding);
+}
+
+async function save(){
+  const res=await api("/ceremony",{method:"PUT",body:JSON.stringify({data,revisionId})});
+  if(res.ok){
+    const body=await res.json();
+    revisionId=body.revisionId;
+    editing=false;
+    document.getElementById("editToggle").textContent="Edit";
+    renderView();
+    return;
+  }
+  if(res.status===409){
+    alert("Someone else saved changes. Reloading the current version.");
+    await loadCeremony();
+    editing=false;
+    document.getElementById("editToggle").textContent="Edit";
+    renderView();
+    return;
+  }
+  alert("Save failed — check your connection and try again.");
+}
+
+function setupControls(){
+  if(session && session.role==="editor"){
+    document.getElementById("editControls").style.display="inline";
+  }
+  document.getElementById("editToggle").addEventListener("click",async ()=>{
+    if(!editing){
+      editing=true;
+      document.getElementById("editToggle").textContent="Save";
+      renderEdit();
+    }else{
+      await save();
+    }
+  });
+  document.getElementById("addMoment").addEventListener("click",()=>{
+    data.moments.push({id:(data.nextId||1),time:"",title:"New moment",description:"",participants:""});
+    data.nextId=(data.nextId||1)+1;
+    renderEdit();
+  });
+  const roleTag=document.getElementById("roleTag");
+  if(session)roleTag.textContent=session.role;
+}
+
+async function loadConfig(){
+  const config=await (await fetch("/api/config")).json();
+  document.title="Ceremony"+(config.venueName?" · "+config.venueName:"");
+  document.getElementById("subTitle").textContent=config.venueName||"";
+}
+
+async function init(){
+  try{
+    await loadConfig();
+    await loadSession();
+    await loadCeremony();
+  }catch(e){
+    document.getElementById("err").textContent="Couldn't load ceremony data: "+(e&&e.message||e);
+    return;
+  }
+  setupControls();
+  renderView();
+}
+init();
+</script>
+</body>
+</html>

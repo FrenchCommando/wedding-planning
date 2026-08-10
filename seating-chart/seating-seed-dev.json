@@ -1,0 +1,14 @@
+{
+  "rooms": [{ "id": 1, "name": "Main Hall", "x1": 0.05, "y1": 0.05, "x2": 0.95, "y2": 0.95 }],
+  "tables": [
+    { "id": 1, "roomId": 1, "name": "Table 1", "seats": [1, 2, null, null, null, null, null, null, null, null], "onPlan": true, "fx": 0.3, "fy": 0.3, "oval": false },
+    { "id": 2, "roomId": 1, "name": "Table 2", "seats": [3, null, null, null, null, null, null, null, null, null], "onPlan": true, "fx": 0.6, "fy": 0.3, "oval": false }
+  ],
+  "guests": [
+    { "id": 1, "name": "Alice Test", "party": "Bride's family" },
+    { "id": 2, "name": "Bob Test", "party": "Bride's family" },
+    { "id": 3, "name": "Carol Test", "party": "Groom's family" }
+  ],
+  "partyColors": {},
+  "nextId": 4
+}

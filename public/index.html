@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hanna &amp; Martial</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --bg:#f6f1e7; --bg2:#efe6d3; --panel:#fffdf8; --ink:#2b2620; --muted:#8a8071;
+    --line:#e2d8c3; --accent:#a9744f; --accent-ink:#fff; --danger:#b2483c;
+    --shadow:0 1px 2px rgba(60,45,20,.05),0 10px 30px rgba(60,45,20,.08);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1b1712; --bg2:#241f18; --panel:#26221b; --ink:#efe9dc; --muted:#a39a87;
+      --line:#3a3428; --accent:#c99361; --accent-ink:#20160c; --danger:#e0685c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ink);
+    background:radial-gradient(ellipse at top,var(--bg2),var(--bg));
+    display:flex;align-items:center;justify-content:center;padding:40px 20px;
+  }
+  #app{width:100%;max-width:420px;}
+  h1{
+    font-family:Georgia,"Iowan Old Style","Times New Roman",serif;
+    font-size:32px;font-weight:400;text-align:center;margin:0 0 2px;letter-spacing:.02em;
+  }
+  .sub{text-align:center;color:var(--muted);margin-bottom:36px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600;}
+  input,select{
+    display:block;width:100%;box-sizing:border-box;padding:10px 12px;margin-bottom:10px;
+    border:1px solid var(--line);border-radius:8px;font-size:14px;
+    background:transparent;color:inherit;font-family:inherit;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--accent);}
+  button{
+    padding:10px 16px;border:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);
+    font-size:14px;font-weight:600;cursor:pointer;width:100%;transition:opacity .15s;
+  }
+  button:hover{opacity:.88;}
+  button.secondary{background:transparent;color:var(--ink);border:1px solid var(--line);width:auto;font-weight:400;}
+  .err{color:var(--danger);font-size:12px;margin-top:-4px;margin-bottom:10px;min-height:1em;}
+
+  nav{display:flex;flex-direction:column;gap:10px;}
+  nav a{
+    display:flex;align-items:center;gap:14px;
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;
+    text-decoration:none;color:inherit;box-shadow:var(--shadow);
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  nav a:not(.disabled):hover{transform:translateY(-1px);border-color:var(--accent);}
+  nav a .icon{font-size:22px;line-height:1;}
+  nav a .label{font-size:15px;font-weight:600;}
+  nav a small{display:block;color:var(--muted);font-weight:400;font-size:12px;margin-top:2px;}
+  nav a.disabled{opacity:.4;pointer-events:none;}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+  .topbar .who{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+  .topbar button{padding:6px 12px;font-size:12px;}
+</style>
+</head>
+<body>
+<div id="app">Loading…</div>
+<script>
+async function api(path, opts) {
+  return fetch("/api" + path, { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...opts });
+}
+
+const SUBPROJECTS = [
+  { key: "seating", label: "Seating Chart", icon: "🪑", href: "/seating-chart/seating-plan.html", roles: ["editor", "vendor", "guest"], built: true },
+  { key: "ceremony", label: "Ceremony", icon: "💍", href: "/ceremony/ceremony.html", roles: ["editor", "vendor", "guest"], built: true },
+  { key: "playlist", label: "Playlist", icon: "🎵", href: "#", roles: ["editor", "vendor"], built: false },
+  { key: "transportation", label: "Transportation", icon: "🚗", href: "#", roles: ["editor", "vendor", "guest"], built: false },
+];
+
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+function renderLoggedOut() {
+  document.getElementById("app").innerHTML = `
+    <h1>Hanna &amp; Martial</h1>
+    <div class="sub" id="subTitle">${esc(window.__venueName || "")}</div>
+
+    <div class="card">
+      <h2>Editor / Vendor</h2>
+      <select id="role"><option value="editor">Editor</option><option value="vendor">Vendor</option></select>
+      <div id="vendorTypeWrap" style="display:none">
+        <input id="vendorType" placeholder="Vendor type (e.g. photographer)">
+      </div>
+      <input id="password" type="password" placeholder="Password">
+      <div class="err" id="loginErr"></div>
+      <button id="loginBtn">Log in</button>
+    </div>
+
+    <div class="card">
+      <h2>Guest</h2>
+      <input id="guestToken" placeholder="Your household code">
+      <div class="err" id="guestErr"></div>
+      <button id="guestBtn">Log in</button>
+    </div>
+  `;
+  const roleSel = document.getElementById("role");
+  const vendorWrap = document.getElementById("vendorTypeWrap");
+  roleSel.addEventListener("change", () => { vendorWrap.style.display = roleSel.value === "vendor" ? "block" : "none"; });
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const role = roleSel.value;
+    const password = document.getElementById("password").value;
+    const vendorType = document.getElementById("vendorType").value;
+    const errEl = document.getElementById("loginErr");
+    errEl.textContent = "";
+    const res = await api(`/login/${role}`, { method: "POST", body: JSON.stringify(role === "vendor" ? { password, vendorType } : { password }) });
+    if (res.ok) { init(); return; }
+    errEl.textContent = "Wrong password.";
+  });
+
+  document.getElementById("guestBtn").addEventListener("click", async () => {
+    const token = document.getElementById("guestToken").value;
+    const errEl = document.getElementById("guestErr");
+    errEl.textContent = "";
+    const res = await api("/login/guest", { method: "POST", body: JSON.stringify({ token }) });
+    if (res.ok) { init(); return; }
+    errEl.textContent = "That code wasn't recognized.";
+  });
+}
+
+function renderLoggedIn(session) {
+  // Editors can preview the vendor-scoped nav without logging out and back
+  // in with the vendor password — this only changes which links render
+  // here, it doesn't touch the actual session/permissions (editor already
+  // has superset access to every page vendor can reach).
+  const previewRole = session.role === "editor" && window.__previewAsVendor ? "vendor" : session.role;
+
+  const links = SUBPROJECTS.filter(p => p.roles.includes(previewRole)).map(p => {
+    const cls = p.built ? "" : "disabled";
+    const note = p.built ? "" : "<small>Coming soon</small>";
+    return `<a class="${cls}" href="${esc(p.href)}"><span class="icon">${p.icon}</span><span><span class="label">${esc(p.label)}</span>${note}</span></a>`;
+  }).join("");
+
+  const roleLabel = session.role === "vendor" && session.vendorType ? `Vendor · ${esc(session.vendorType)}` :
+                     session.role === "guest" && session.household ? `Guest · ${esc(session.household)}` :
+                     session.role[0].toUpperCase() + session.role.slice(1);
+
+  const previewToggle = session.role === "editor"
+    ? `<button class="secondary" id="previewToggle" style="margin-right:8px">${window.__previewAsVendor ? "Viewing as vendor" : "Preview as vendor"}</button>`
+    : "";
+
+  document.getElementById("app").innerHTML = `
+    <div class="topbar">
+      <div>
+        <h1 style="text-align:left;margin-bottom:0;font-size:24px">Hanna &amp; Martial</h1>
+        <div class="who">${roleLabel}${previewRole !== session.role ? " (previewing vendor)" : ""}</div>
+      </div>
+      <div>${previewToggle}<button class="secondary" id="logoutBtn">Log out</button></div>
+    </div>
+    <nav>${links}</nav>
+  `;
+  document.getElementById("logoutBtn").addEventListener("click", async () => {
+    await api("/logout", { method: "POST" });
+    init();
+  });
+  const toggleBtn = document.getElementById("previewToggle");
+  if (toggleBtn) toggleBtn.addEventListener("click", () => {
+    window.__previewAsVendor = !window.__previewAsVendor;
+    renderLoggedIn(session);
+  });
+}
+
+async function init() {
+  if (window.__venueName === undefined) {
+    const config = await (await fetch("/api/config")).json();
+    window.__venueName = config.venueName;
+  }
+  const res = await api("/whoami");
+  const body = await res.json();
+  if (body.session) renderLoggedIn(body.session);
+  else renderLoggedOut();
+}
+init();
+</script>
+</body>
+</html>

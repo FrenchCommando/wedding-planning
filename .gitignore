@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.env*
+!.env.example
+data/*
+!data/venue-seed.json.example
