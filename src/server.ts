@@ -21,11 +21,14 @@ app.get("/api/whoami", (req, res) => {
   res.json({ session: req.session ?? null });
 });
 
-// Public, unauthenticated: venue name is display copy, not secret, but it's
-// PII (identifies a real location) so it can't be hardcoded in the repo's
-// HTML — it's env-config instead, same as passwords/secrets.
+// Public, unauthenticated: venue name / wedding site URL are display copy,
+// not secret, but they're personal to this couple so they can't be
+// hardcoded in the repo's HTML — env-config instead, same as passwords.
 app.get("/api/config", (_req, res) => {
-  res.json({ venueName: process.env.VENUE_NAME ?? "" });
+  res.json({
+    venueName: process.env.VENUE_NAME ?? "",
+    weddingSiteUrl: process.env.WEDDING_SITE_URL ?? "",
+  });
 });
 
 app.post("/api/logout", (_req, res) => {

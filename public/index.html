@@ -64,9 +64,18 @@
   .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
   .topbar .who{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
   .topbar button{padding:6px 12px;font-size:12px;}
+
+  #siteBanner{display:none;text-align:center;margin-bottom:16px;}
+  #siteBanner a{
+    display:inline-flex;align-items:center;gap:6px;
+    color:var(--accent);text-decoration:none;font-size:12px;font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  #siteBanner a:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
+<div id="siteBanner"><a id="siteBannerLink" href="#" target="_blank" rel="noopener">🌐 Main wedding site</a></div>
 <div id="app">Loading…</div>
 <script>
 async function api(path, opts) {
@@ -176,6 +185,10 @@ async function init() {
   if (window.__venueName === undefined) {
     const config = await (await fetch("/api/config")).json();
     window.__venueName = config.venueName;
+    if (config.weddingSiteUrl) {
+      document.getElementById("siteBannerLink").href = config.weddingSiteUrl;
+      document.getElementById("siteBanner").style.display = "block";
+    }
   }
   const res = await api("/whoami");
   const body = await res.json();
