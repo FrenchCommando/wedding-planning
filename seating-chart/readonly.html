@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seating Plan (view only)</title>
+<style>{{CSS}}</style></head><body>
+<div class="ro-app">
+<div class="ro-bar">
+<div class="ro-title">Seating Plan<span>{{SUBTITLE}}</span></div>
+<div class="seg"><button id="vPlan" class="btn active">Plan</button><button id="vTable" class="btn">Tables</button></div>
+<input id="search" class="in" placeholder="Find a guest…" autocomplete="off">
+<div class="seg"><button id="zOut" class="btn" title="Zoom out">−</button><button id="zFit" class="btn" title="Fit to screen" style="min-width:48px">100%</button><button id="zIn" class="btn" title="Zoom in">+</button></div>
+<div class="ro-stats"><b id="stS">0</b> seated · <b id="stT">0</b> tables</div>
+</div>
+<div id="canvasWrap" class="canvas-wrap"><div id="viewport" class="viewport"><div id="plan" class="plan"></div><div id="offplan" class="offplan"></div></div></div>
+<div id="tableview" class="tableview" style="display:none"></div>
+</div>
+<script>window.__EMBEDDED_STATE__={{STATE_JSON}};({{VIEWER_FN}})();</script>
+</body></html>
