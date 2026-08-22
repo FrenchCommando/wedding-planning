@@ -61,6 +61,26 @@
   .guest .g-x:hover{color:var(--danger)}
   .dragging{opacity:.4}
 
+  /* Mobile: sidebar becomes an off-canvas drawer instead of a fixed grid
+     column — a 290px column leaves almost nothing for the canvas on a
+     phone-width viewport. Toggled by #sideToggle (shown only at this
+     breakpoint) via a .side-open class on .app. */
+  #sideToggle{display:none}
+  @media (max-width:720px){
+    .app{grid-template-columns:1fr}
+    #sideToggle{display:inline-block}
+    .side{
+      position:fixed;inset:0 25% 0 0;z-index:60;
+      transform:translateX(-100%);transition:transform .2s ease;
+      box-shadow:var(--shadow);
+    }
+    .app.side-open .side{transform:translateX(0)}
+    .side-backdrop{
+      display:none;position:fixed;inset:0;background:rgba(20,24,30,.4);z-index:55;
+    }
+    .app.side-open .side-backdrop{display:block}
+  }
+
   /* Main */
   .main{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
   .toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;z-index:5}
@@ -212,7 +232,8 @@
 </style>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
+  <div class="side-backdrop" id="sideBackdrop"></div>
   <aside class="side">
     <header><a href="/" style="font-size:12px;color:var(--muted);text-decoration:none">&larr; Home</a><h1>Seating Plan</h1><div class="sub" id="subTitle"></div></header>
     <div class="field"><input id="search" class="in" placeholder="Search guests…" autocomplete="off"></div>
@@ -233,6 +254,7 @@
 
   <main class="main">
     <div class="toolbar">
+      <button class="btn small" id="sideToggle" title="Show guest list">☰ Guests</button>
       <div class="seg">
         <button class="btn small active" id="viewPlan">Plan</button>
         <button class="btn small" id="viewTable">Table</button>
@@ -1200,9 +1222,12 @@ document.getElementById("pdfBtn").addEventListener("click",openPDF);
 document.getElementById("readonlyBtn").addEventListener("click",downloadReadOnly);
 const help=document.getElementById("help");
 document.getElementById("helpBtn").addEventListener("click",()=>{help.hidden=false;});
+const appEl=document.getElementById("app");
+document.getElementById("sideToggle").addEventListener("click",()=>appEl.classList.toggle("side-open"));
+document.getElementById("sideBackdrop").addEventListener("click",()=>appEl.classList.remove("side-open"));
 document.getElementById("helpClose").addEventListener("click",()=>{help.hidden=true;});
 help.addEventListener("click",e=>{if(e.target.id==="help")help.hidden=true;});
-window.addEventListener("keydown",e=>{if(e.key==="Escape"){help.hidden=true;if(swapFrom){swapFrom=null;renderAll();toast("Swap cancelled");}}});
+window.addEventListener("keydown",e=>{if(e.key==="Escape"){help.hidden=true;appEl.classList.remove("side-open");if(swapFrom){swapFrom=null;renderAll();toast("Swap cancelled");}}});
 document.getElementById("viewPlan").addEventListener("click",()=>setView("plan"));
 document.getElementById("viewTable").addEventListener("click",()=>setView("table"));
 document.getElementById("viewParties").addEventListener("click",()=>setView("parties"));
