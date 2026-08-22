@@ -166,7 +166,7 @@ input,button,select{font:inherit}
   display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;text-align:center;overflow:hidden;padding:2px;cursor:pointer;transition:background .1s,border-color .1s;font-size:10.5px}
 .seat .s-name{pointer-events:none;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;font-weight:600}
 .seat.occupied{background:var(--occupied);border-color:var(--occupied-line)}
-.seat.occupied[data-color]{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,#fff)}
+.seat.occupied[data-color]{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,var(--panel))}
 .seat.occupied.unconfirmed{border-style:dotted;border-width:2px}
 .dot-unc{background:transparent!important;border:2px dotted;box-sizing:border-box}
 .pchip.unc{border-style:dotted;border-color:#b3ab99}
