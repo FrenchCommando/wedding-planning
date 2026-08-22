@@ -8,7 +8,7 @@ import { readJsonFile, seedJsonFile } from "./drive.js";
 
 // Fixture data lives in its own JSON file per sub-project (single source of
 // truth, reviewable/editable directly) rather than as object literals here.
-const FAKE_CEREMONY = JSON.parse(fs.readFileSync("./ceremony/ceremony-data.json", "utf8"));
+const FAKE_CEREMONY = JSON.parse(fs.readFileSync("./ceremony/ceremony-seed-dev.json", "utf8"));
 const FAKE_SEATING = JSON.parse(fs.readFileSync("./seating-chart/seating-seed-dev.json", "utf8"));
 
 async function main() {
