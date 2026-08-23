@@ -66,18 +66,19 @@
   .topbar .who{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
   .topbar button{padding:6px 12px;font-size:12px;}
 
-  #siteBanner{display:none;text-align:center;margin-bottom:16px;}
+  #siteBanner{display:none;text-align:center;margin-top:16px;}
   #siteBanner a{
     display:inline-flex;align-items:center;gap:6px;
-    color:var(--accent);text-decoration:none;font-size:12px;font-weight:600;
-    letter-spacing:.04em;text-transform:uppercase;
+    color:var(--accent);text-decoration:underline;text-underline-offset:2px;
+    font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;
   }
-  #siteBanner a:hover{text-decoration:underline;}
+  #siteBanner a::after{content:"↗";text-decoration:none;font-size:16px;margin-left:2px;}
+  #siteBanner a:hover{opacity:.8;}
 </style>
 </head>
 <body>
-<div id="siteBanner"><a id="siteBannerLink" href="#" target="_blank" rel="noopener">🌐 Main wedding site</a></div>
 <div id="app">Loading…</div>
+<div id="siteBanner"><a id="siteBannerLink" href="#" target="_blank" rel="noopener">🌐 Visit main wedding site (link)</a></div>
 <script>
 async function api(path, opts) {
   return fetch("/api" + path, { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...opts });
