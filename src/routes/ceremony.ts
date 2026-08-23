@@ -2,6 +2,8 @@ import { Router } from "express";
 import { readJsonFile, writeJsonFile } from "../drive.js";
 import { requireRole } from "../auth/session.js";
 import { asyncRoute } from "../asyncHandler.js";
+import { mountRevisionRoutes } from "../revision-routes.js";
+import { ceremonyDiffConfig } from "../ceremony-diff-config.js";
 
 const FILE_NAME = "ceremony.json";
 
@@ -38,5 +40,12 @@ router.put("/ceremony", requireRole("editor"), asyncRoute(async (req, res) => {
   }
   res.json({ revisionId: result.revisionId });
 }));
+
+// Past-saves list + "compare with a previous version" — same reusable
+// route pair seating's data file gets, see mountRevisionRoutes. Doesn't
+// change the save-conflict UX above (still "someone else saved, reload" —
+// that asymmetry with seating is a separate, deliberate decision, not
+// touched here); this only adds the History feature.
+mountRevisionRoutes(router, { path: "/ceremony", fileName: FILE_NAME, defaultState: DEFAULT_STATE, diffConfig: ceremonyDiffConfig });
 
 export default router;

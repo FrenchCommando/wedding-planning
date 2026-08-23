@@ -122,6 +122,17 @@
 
   .addBar{max-width:640px;margin:20px auto;text-align:center;}
   #err{color:var(--danger);text-align:center;margin-bottom:20px;}
+
+  .overlay{position:fixed;inset:0;background:rgba(20,16,10,.5);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:6vh 20px;}
+  .overlay[hidden]{display:none;}
+  .overlay-card{background:var(--panel);max-width:520px;width:100%;max-height:88vh;overflow:auto;border-radius:14px;box-shadow:var(--shadow);padding:20px 24px 24px;}
+  .overlay-card h2{margin:0 0 4px;font-size:18px;}
+  .overlay-card .lead{color:var(--muted);margin:0 0 12px;font-size:13px;}
+  .overlay-close{float:right;border:1px solid var(--line);background:transparent;border-radius:8px;width:28px;height:28px;padding:0;cursor:pointer;font-size:15px;line-height:1;}
+  .hist-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+  .hist-row:last-child{border-bottom:0;}
+  .hist-when{flex:1;font-size:13px;}
+  .hist-empty{color:var(--muted);font-size:13px;padding:6px 0;}
 </style>
 </head>
 <body>
@@ -129,6 +140,15 @@
   <a href="/">&larr; Home</a>
   <span id="roleTag" style="font-size:12px;opacity:.6"></span>
   <span id="editControls" style="display:none"><button class="secondary" id="editToggle">Edit</button></span>
+  <button class="secondary" id="historyBtn" style="display:none">History</button>
+</div>
+<div class="overlay" id="history" hidden>
+  <div class="overlay-card">
+    <button class="overlay-close" id="historyClose" title="Close">×</button>
+    <h2>Past saves</h2>
+    <p class="lead">Each save keeps a Drive revision. Pick one to see what changed since then. Regular saves can age out of Drive's history over time.</p>
+    <div id="historyList"></div>
+  </div>
 </div>
 <h1>Ceremony</h1>
 <div class="sub" id="subTitle"></div>
@@ -150,6 +170,7 @@ async function promptForLogin(){
   }
 }
 function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+", "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
 
 let data=null, revisionId=null, editing=false, session=null;
 
@@ -493,9 +514,41 @@ async function save(){
   alert("Save failed — check your connection and try again.");
 }
 
+async function openHistory(){
+  const overlay=document.getElementById("history");
+  overlay.hidden=false;
+  const box=document.getElementById("historyList");
+  box.innerHTML='<p class="hist-empty">Loading…</p>';
+  const res=await api("/ceremony/revisions");
+  if(!res.ok){box.innerHTML='<p class="hist-empty">Couldn\'t load history — try again.</p>';return;}
+  const {revisions}=await res.json();
+  if(!revisions.length){box.innerHTML='<p class="hist-empty">No past saves yet.</p>';return;}
+  box.innerHTML="";
+  for(const r of revisions){
+    const row=document.createElement("div");row.className="hist-row";
+    row.innerHTML=`<span class="hist-when">${r.keepForever?"📌 ":""}${esc(fmtRev(r.modifiedTime))}</span>`+
+      `<button class="secondary" data-id="${esc(r.id)}">Compare with current</button>`;
+    row.querySelector("button").addEventListener("click",()=>compareRevision(r.id));
+    box.appendChild(row);
+  }
+}
+async function compareRevision(id){
+  const res=await api(`/ceremony/revisions/${encodeURIComponent(id)}/diff`);
+  if(!res.ok){
+    const body=await res.json().catch(()=>null);
+    alert(body&&body.error?body.error:"Couldn't load that comparison — try again.");
+    return;
+  }
+  const {changes}=await res.json();
+  alert(changes.length?"Changes since that save:\n\n"+changes.map(c=>"• "+c).join("\n"):"No changes since that save.");
+}
+
 function setupControls(){
   if(session && session.role==="editor"){
     document.getElementById("editControls").style.display="inline";
+  }
+  if(session){
+    document.getElementById("historyBtn").style.display="inline";
   }
   document.getElementById("editToggle").addEventListener("click",async ()=>{
     if(!editing){
@@ -511,6 +564,11 @@ function setupControls(){
     data.nextId=(data.nextId||1)+1;
     renderEdit();
   });
+  document.getElementById("historyBtn").addEventListener("click",openHistory);
+  const historyOverlay=document.getElementById("history");
+  document.getElementById("historyClose").addEventListener("click",()=>{historyOverlay.hidden=true;});
+  historyOverlay.addEventListener("click",e=>{if(e.target.id==="history")historyOverlay.hidden=true;});
+  window.addEventListener("keydown",e=>{if(e.key==="Escape")historyOverlay.hidden=true;});
   const roleTag=document.getElementById("roleTag");
   if(session)roleTag.textContent=session.role;
 }

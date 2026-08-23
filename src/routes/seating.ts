@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { readJsonFile, writeJsonFile, listRevisions, getRevision } from "../drive.js";
+import { readJsonFile, writeJsonFile } from "../drive.js";
 import { requireRole } from "../auth/session.js";
-import { diffSeating } from "../seating-diff.js";
+import { diffData } from "../data-diff.js";
+import { seatingDiffConfig } from "../seating-diff-config.js";
 import { asyncRoute } from "../asyncHandler.js";
+import { mountRevisionRoutes } from "../revision-routes.js";
 
 const FILE_NAME = "seating.json";
 
@@ -45,7 +47,7 @@ router.put("/seating", requireRole("editor"), asyncRoute(async (req, res) => {
     res.status(409).json({
       error: "conflict",
       currentRevisionId: result.currentRevisionId,
-      changes: diffSeating(baseData, current as any),
+      changes: diffData(baseData, current, seatingDiffConfig),
     });
     return;
   }
@@ -53,35 +55,8 @@ router.put("/seating", requireRole("editor"), asyncRoute(async (req, res) => {
   res.json({ revisionId: result.revisionId });
 }));
 
-// Past Drive revisions of seating.json, newest first — powers the "compare
-// with a previous version" UI. Read-only, so open to the same roles as GET
-// /seating; only the PUT above (the actual write) is editor-gated.
-router.get("/seating/revisions", requireRole("editor", "vendor", "guest"), asyncRoute(async (_req, res) => {
-  const revisions = await listRevisions(FILE_NAME);
-  res.json({ revisions });
-}));
-
-// Plain-English diff between one past revision and the current live data —
-// reuses the same diffSeating() the save-conflict modal uses, just with a
-// past revision as the baseline instead of the editor's stale in-browser copy.
-router.get("/seating/revisions/:id/diff", requireRole("editor", "vendor", "guest"), asyncRoute(async (req, res) => {
-  let past;
-  try {
-    past = await getRevision(FILE_NAME, req.params.id);
-  } catch (e: any) {
-    // Drive stops serving the content of older, non-milestone revisions
-    // over time (they stay listed, but `alt=media` starts 403ing with
-    // "cannotDownloadRevision") — an expected, common condition once a
-    // save ages out, not a real server error, so it gets its own clean
-    // response instead of falling through to the generic 500 below.
-    if (e?.code === 403 || e?.code === 404) {
-      res.status(404).json({ error: "That save is no longer available — Drive only keeps full content for milestone saves and recent history." });
-      return;
-    }
-    throw e;
-  }
-  const { data: current } = await readJsonFile(FILE_NAME, DEFAULT_STATE);
-  res.json({ changes: diffSeating(past as any, current as any) });
-}));
+// Past-saves list + "compare with a previous version" — same reusable
+// route pair every sub-project's data file gets, see mountRevisionRoutes.
+mountRevisionRoutes(router, { path: "/seating", fileName: FILE_NAME, defaultState: DEFAULT_STATE, diffConfig: seatingDiffConfig });
 
 export default router;

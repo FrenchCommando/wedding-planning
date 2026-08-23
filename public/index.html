@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hanna &amp; Martial</title>
+<title>Hanna &amp; Martial — Planning</title>
 <style>
   :root{
     color-scheme:light dark;
@@ -94,7 +94,7 @@ function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">
 
 function renderLoggedOut() {
   document.getElementById("app").innerHTML = `
-    <h1>Hanna &amp; Martial</h1>
+    <h1>Hanna &amp; Martial — Planning</h1>
     <div class="sub" id="subTitle">${esc(window.__venueName || "")}</div>
 
     <div class="card">
@@ -164,7 +164,7 @@ function renderLoggedIn(session) {
   document.getElementById("app").innerHTML = `
     <div class="topbar">
       <div>
-        <h1 style="text-align:left;margin-bottom:0;font-size:24px">Hanna &amp; Martial</h1>
+        <h1 style="text-align:left;margin-bottom:0;font-size:24px">Hanna &amp; Martial — Planning</h1>
         <div class="who">${roleLabel}${previewRole !== session.role ? " (previewing vendor)" : ""}</div>
       </div>
       <div>${previewToggle}<button class="secondary" id="logoutBtn">Log out</button></div>

@@ -2,9 +2,9 @@
 
 **Built and working:**
 - Backend skeleton, auth, Drive integration — done, per spec below.
-- Seating chart — migrated off File System Access API to the backend; optimistic-lock save with plain-English conflict diff + force-overwrite. Real 175-guest data is live in the **prod** Drive folder. Mobile: sidebar becomes an off-canvas drawer below 720px width (toggled by a `#sideToggle` "☰ Guests" button, backdrop click / Escape to close) instead of the old fixed 290px grid column that ate the whole phone screen. Pan/zoom is clamped (`clampPan` inside `applyTransform`, in `seating-chart/seating-plan.html`) so dragging/scrolling can no longer push the plan fully off-canvas with nothing left to grab. Dark mode uses proper tokens now (`--floor`, `--hover`, `--th-bg`, `--nocell-bg`, `--chip-bg`, `--kbd-bg`, `--outline-bg/border/ink`) instead of several hardcoded light-only colors (the canvas floor background was the worst offender — stayed bright cream regardless of theme). The "PDF" print output is forced light always (`background:#fff` in `@media print`, not `var(--panel)`) since paper output shouldn't follow OS dark mode. The "Read-only" downloadable snapshot's CSS lives in its own `seating-chart/readonly.css` (fetched at export time and inlined into the downloaded blob, so the download is still a single self-contained file) rather than duplicated as a `READONLY_CSS` JS template string — same token treatment as the main app. **As of the last session these seating-chart changes were made but not committed/pushed, and the read-only export's fetch-at-export-time flow was not verified end-to-end in an actual browser (no browser tool was connected that session) — worth a manual click-through of the "Read-only" button before trusting it.**
-- Ceremony page — timed program outline with scroll-reveal, plus a real vertical aisle diagram (Entrance bottom → Altar top) for Processional/Recessional moments. Motion is scroll-linked (position tied to scroll offset via `getBoundingClientRect`), not timer/autoplay-based. Uses a `position:sticky` spacer-pin pattern so the page freezes while the diagram animates, then releases. "End" marker caps the timeline; page bottom padding is computed in JS so max-scroll lands exactly at End's top. Each processional-order person has a plain-text `emoji` field (default 🚶) editable in the UI — not inferred from name/role text. Rail geometry (gutter/line/dot/time-column widths) is driven by CSS custom properties with a `@media (max-width:520px)` override, so it's not fixed-desktop-pixel-only. Real 8-moment/6-processional-entry program is live in the **prod** Drive folder (pushed via `src/seed-sync.ts`, see below).
-- Landing page — role-aware nav, editor "preview as vendor" toggle, warm light/dark theme consistent across all three pages, banner link to the main wedding site (`WEDDING_SITE_URL` env var, hidden when unset).
+- Seating chart — migrated off File System Access API to the backend; optimistic-lock save with plain-English conflict diff + force-overwrite. Real 175-guest data is live in the **prod** Drive folder. Mobile: sidebar becomes an off-canvas drawer below 720px width (toggled by a `#sideToggle` "☰ Guests" button, backdrop click / Escape to close) instead of the old fixed 290px grid column that ate the whole phone screen. Pan/zoom is clamped (`clampPan` inside `applyTransform`, in `seating-chart/seating-plan.js`) so dragging/scrolling can no longer push the plan fully off-canvas with nothing left to grab. Dark mode uses proper tokens now (`--floor`, `--hover`, `--th-bg`, `--nocell-bg`, `--chip-bg`, `--kbd-bg`, `--outline-bg/border/ink`) instead of several hardcoded light-only colors (the canvas floor background and the occupied-seat text/background contrast were the worst offenders). The "PDF" print output is forced light always (`background:#fff` in `@media print`, not `var(--panel)`) since paper output shouldn't follow OS dark mode. `seating-chart/seating-plan.html` is now just the HTML shell — its CSS/JS live in sibling `seating-plan.css`/`seating-plan.js`, and the "Read-only" downloadable snapshot's markup/CSS live in their own `readonly.html`/`readonly.css` (fetched at export time and inlined into the downloaded blob, so the download is still a single self-contained file), all no longer duplicated as JS template strings. History/milestone-save feature: see "Concurrent editing" below. **Verified via the running dev server + `curl`/`node --check`/`tsc --noEmit`, but not click-tested end-to-end in an actual browser (no browser tool connected) — worth a manual pass over mobile drawer, dark mode, Read-only export, and History before fully trusting it.**
+- Ceremony page — timed program outline with scroll-reveal, plus a real vertical aisle diagram (Entrance bottom → Altar top) for Processional/Recessional moments. Motion is scroll-linked (position tied to scroll offset via `getBoundingClientRect`), not timer/autoplay-based. Uses a `position:sticky` spacer-pin pattern so the page freezes while the diagram animates, then releases. "End" marker caps the timeline; page bottom padding is computed in JS so max-scroll lands exactly at End's top. Each processional-order person has a plain-text `emoji` field (default 🚶) editable in the UI — not inferred from name/role text. Rail geometry (gutter/line/dot/time-column widths) is driven by CSS custom properties with a `@media (max-width:520px)` override, so it's not fixed-desktop-pixel-only. Real 8-moment/6-processional-entry program is live in the **prod** Drive folder (pushed via `src/seed-sync.ts`, see below). Backend now also has the History/"compare with a previous version" feature (see "Concurrent editing" below) — no frontend button for it yet on the ceremony page itself, only the API routes.
+- Landing page — role-aware nav, editor "preview as vendor" toggle, warm light/dark theme consistent across all three pages, banner link to the main wedding site (`WEDDING_SITE_URL` env var, hidden when unset). The role `<select>` dropdown used `background:transparent;color:inherit` — the closed control looked fine, but the opened native dropdown list is a separate rendering surface that doesn't reliably honor `transparent`, so it fell back to the browser's own default background while still forcing through the theme's (adapted) text color, landing light-on-light or dark-on-dark depending on OS/browser. Fixed with an explicit `background:var(--panel);color:var(--ink)`, same fix applied to the seating chart's search input for the same underlying reason.
 - Deployed — Docker (standalone, no shared network dependency) + host nginx, live on the Pi. See "Deployment" below for the actual redeploy commands.
 
 **Not yet built:** playlist, transportation sub-projects as backend-integrated pages (playlist exists only as a standalone client-only HTML file, spec'd below but not wired to `/api`; transportation not started).
@@ -231,7 +231,7 @@ problem).
 
 Chosen approach: **optimistic lock via Drive's revision ID**, not a
 field-level merge, not a soft lock. Implemented in `src/routes/seating.ts`
-+ `src/seating-diff.ts`.
++ the generic diff engine (`src/data-diff.ts`, see below).
 
 - On load, the app records the file's current `headRevisionId`.
 - On save, it checks that ID against Drive's current one for the file.
@@ -268,27 +268,73 @@ When Save is refused (revision ID mismatch), show a modal:
 ### Diff logic
 
 Drive has no built-in semantic diff for arbitrary (non-Docs) files — it only
-stores raw byte snapshots per revision. The diff has to be custom code, but
-it's small because the data shape is diff-friendly (flat, id-keyed records,
-fixed-position arrays, no free-form text):
+stores raw byte snapshots per revision. The diff is custom code, but it's a
+**generic, reusable engine** (`src/data-diff.ts`'s `diffData()`) rather than
+a hand-written function per sub-project, because the data shape is
+diff-friendly the same way across all of them (flat, id-keyed record arrays,
+sometimes a fixed-position "slot" array referencing another collection, no
+free-form text). Originally seating had its own bespoke `seating-diff.ts`
+and ceremony had none (per the old "not worth the machinery" reasoning
+below); once "compare with a previous version" became a feature every
+sub-project should have, that asymmetry stopped making sense, so it's now
+one engine driven by a small per-sub-project config:
 
-- `guests`: array of `{id, name, party, unconfirmed?}`. Build an `id`-keyed
-  map for both the baseline and the current Drive version; anything missing
-  in one map is an add/remove, anything present in both with different
-  field values is a change. No fuzzy matching needed — `id` is stable.
-- `tables`: array of `{id, name, seats: [guestId|null, ...10]}`. Same
-  `id`-keyed approach for table-level fields (name, position); `seats` is
-  compared index-by-index (`seatsOld[i] !== seatsNew[i]` → seat i changed
-  occupant) since seats are fixed slots, not a reorderable list.
-- Roughly 30-40 lines: two `Map`s, two loops, a handful of message templates
-  ("X moved to Table Y", "Z renamed to W", "guest A added/removed") to turn
-  raw diffs into the plain-English list shown in the conflict modal.
+- Each sub-project declares its collections in a config file
+  (`src/seating-diff-config.ts`, `src/ceremony-diff-config.ts`) — a `label()`
+  function per collection (e.g. a guest's name, a moment's title), which
+  fields are worth surfacing as "changed" (opt-in, not every field — most
+  fields like a table's `fx`/`fy` position aren't worth a diff line), and
+  optionally a `slots` config for fixed-position reference arrays (seating's
+  `tables[].seats` → guest ids), which `diffData()` turns into "X moved to
+  Table Y, seat Z" / "added to" / "removed from" messages by cross-
+  referencing the target collection's own `label()` — not raw index noise.
+- `diffData(baseline, current, config)` does the actual comparing: id-keyed
+  `Map`s per collection for add/remove detection, opt-in field comparison,
+  and the slot-array move detection described above.
+- Adding a new sub-project's diff support (playlist, transportation) is
+  writing one small config file, not another hand-rolled diff function.
 
-**Note on `nextId` (new-guest id assignment):** two editors concurrently
-adding *different* new guests should not collide, but only if `nextId` is
+**Note on `nextId` (new-record id assignment):** two editors concurrently
+adding *different* new records should not collide, but only if `nextId` is
 read fresh from Drive at save time rather than cached from page-load —
 worth being deliberate about this when implementing, not assumed to be safe
 by default.
+
+### History / "compare with a previous version"
+
+Beyond the save-conflict diff (above), there's a standing **History** button
+(seating chart toolbar) that lists past Drive revisions and diffs any of
+them against the current live data — same `diffData()` engine, different
+baseline (a past revision's content instead of the editor's stale in-browser
+copy). Reusable route pair for this, `mountRevisionRoutes()` in
+`src/revision-routes.ts`, mounted once per sub-project's router (currently
+seating and ceremony) rather than copy-pasted — `GET <path>/revisions`
+(list) and `GET <path>/revisions/:id/diff` (compare with current).
+
+- **Milestone saves**: `Shift`+click the seating chart's Save button (or
+  `keepForever: true` in the PUT body) pins that revision so Drive never
+  auto-prunes its content — the intended way to guarantee a save stays
+  comparable long-term (e.g. "final chart before printing"). There's no
+  dedicated UI for this on ceremony yet, only the `keepForever` field on the
+  PUT body itself.
+- **Revision retention for non-milestone saves is not fully understood** —
+  don't assert a specific rule. One three-week-old dev revision came back
+  `cannotDownloadRevision` (Drive still lists it, but `alt=media` 403s) while
+  two more-recent, also-non-milestone saves diffed successfully. So it's
+  *not* "prunes almost immediately," but there's clearly some retention
+  boundary for unpinned revisions and its exact shape (time-based? count-
+  based?) hasn't been pinned down. `getRevision()` in `src/drive.ts` handles
+  the undownloadable case as a clean 404 either way, so this isn't a crash
+  risk — just don't promise users a specific "how far back" guarantee.
+- Discovered while building this: an unhandled rejection in an async Express
+  route handler **crashes the whole server process** (Express 4, used here,
+  doesn't auto-catch these — Express 5 does). Confirmed for real via the
+  `cannotDownloadRevision` case above taking down the dev server outright.
+  Fixed with a shared `asyncRoute()` wrapper (`src/asyncHandler.ts`) applied
+  to every async route handler across the backend, plus a catch-all error
+  middleware in `server.ts` (must be last, must take 4 params to be
+  recognized as Express error middleware) — worth wrapping any new async
+  route in `asyncRoute()` from now on, not just the revision ones.
 
 ## First-run setup
 
