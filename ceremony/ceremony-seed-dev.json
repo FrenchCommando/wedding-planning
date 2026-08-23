@@ -2,11 +2,16 @@
   "moments": [
     { "id": 1, "time": "3:30 PM", "title": "Guests arrive & seated", "description": "", "participants": "" },
     { "id": 2, "time": "3:45 PM", "title": "Processional", "description": "Wedding party enters.", "participants": "Wedding party" },
-    { "id": 3, "time": "3:50 PM", "title": "Welcome", "description": "Officiant opens the ceremony.", "participants": "Officiant" }
+    { "id": 3, "time": "3:50 PM", "title": "Welcome", "description": "Officiant opens the ceremony.", "participants": "Officiant" },
+    { "id": 4, "time": "4:20 PM", "title": "Recessional", "description": "Couple and wedding party exit.", "participants": "Wedding party" }
   ],
   "processionalOrder": [
     { "id": 9, "name": "Officiant", "role": "", "emoji": "🧑‍💼", "startAt": 0 },
     { "id": 10, "name": "Ring Bearer", "role": "", "emoji": "👦", "startAt": 8 }
   ],
-  "nextId": 11
+  "recessionalOrder": [
+    { "id": 11, "name": "Hanna & Martial", "role": "Couple", "emoji": "💐", "startAt": 0 },
+    { "id": 12, "name": "Ring Bearer", "role": "", "emoji": "👦", "startAt": 8 }
+  ],
+  "nextId": 13
 }

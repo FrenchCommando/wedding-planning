@@ -161,12 +161,17 @@ function renderLoggedIn(session) {
   const previewToggle = session.role === "editor"
     ? `<button class="secondary" id="previewToggle" style="margin-right:8px">${window.__previewAsVendor ? "Viewing as vendor" : "Preview as vendor"}</button>`
     : "";
+  // Not a sub-project (no household ever sees it), so it lives outside the
+  // main nav — a small editor-only link instead, next to the role tag.
+  const adminLink = session.role === "editor"
+    ? `<a href="/admin.html" style="font-size:11px;color:var(--muted);margin-left:8px">Manage guest links</a>`
+    : "";
 
   document.getElementById("app").innerHTML = `
     <div class="topbar">
       <div>
         <h1 style="text-align:left;margin-bottom:0;font-size:24px">Hanna &amp; Martial — Planning</h1>
-        <div class="who">${roleLabel}${previewRole !== session.role ? " (previewing vendor)" : ""}</div>
+        <div class="who">${roleLabel}${previewRole !== session.role ? " (previewing vendor)" : ""}${adminLink}</div>
       </div>
       <div>${previewToggle}<button class="secondary" id="logoutBtn">Log out</button></div>
     </div>
@@ -183,7 +188,26 @@ function renderLoggedIn(session) {
   });
 }
 
+// A guest's household link is "…/?token=XXXXXXX" — clicking it should log
+// them in directly, no typing required. The code field on the Guest card
+// still works too (same /login/guest endpoint), for anyone who got the
+// code as plain text rather than a link.
+async function tryTokenLogin() {
+  const params = new URLSearchParams(location.search);
+  const token = params.get("token");
+  if (!token) return;
+  // Strip it from the URL immediately, win or lose — a token shouldn't
+  // linger in the address bar or browser history once it's been used.
+  const url = new URL(location.href);
+  url.searchParams.delete("token");
+  history.replaceState({}, "", url);
+  await api("/login/guest", { method: "POST", body: JSON.stringify({ token }) });
+  // Failure is silent here — an invalid/expired token just falls through
+  // to the normal logged-out view, where the code field is still there.
+}
+
 async function init() {
+  await tryTokenLogin();
   if (window.__venueName === undefined) {
     const config = await (await fetch("/api/config")).json();
     window.__venueName = config.venueName;

@@ -20,5 +20,14 @@ export const ceremonyDiffConfig: DiffConfig = {
         emoji: {},
       },
     },
+    recessionalOrder: {
+      label: (p) => p.name,
+      fields: {
+        name: { message: (_after, before, after) => `Recessional entry renamed: ${before} → ${after}` },
+        role: {},
+        startAt: {},
+        emoji: {},
+      },
+    },
   },
 };

@@ -4,7 +4,7 @@ import { readJsonFile, writeJsonFile } from "../drive.js";
 import { issueSession } from "./session.js";
 import { asyncRoute } from "../asyncHandler.js";
 
-interface GuestAuthFile {
+export interface GuestAuthFile {
   households: { household: string; token: string; createdAt: string }[];
 }
 
@@ -68,6 +68,12 @@ function generateToken(length = 7): string {
     out += TOKEN_ALPHABET[Math.floor(Math.random() * TOKEN_ALPHABET.length)];
   }
   return out;
+}
+
+/** Every minted household token, newest first — powers the admin guest-links page. */
+export async function listGuestTokens(): Promise<GuestAuthFile["households"]> {
+  const { data } = await readJsonFile<GuestAuthFile>("guests-auth.json", { households: [] });
+  return data.households.slice().reverse();
 }
 
 /** Editor-only admin route: mint a new household guest link. Mounted separately behind requireRole("editor"). */

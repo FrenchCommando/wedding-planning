@@ -9,9 +9,14 @@ const FILE_NAME = "ceremony.json";
 
 const DEFAULT_STATE = {
   moments: [] as { id: number; time: string; title: string; description?: string; participants?: string }[],
-  // Aisle order for the processional: who walks in, in what order, and how
-  // many seconds after the processional starts. Drives the aisle diagram.
+  // Aisle order for the processional/recessional: who walks in/out, in what
+  // order, and how many seconds after that moment starts. Drives the aisle
+  // diagram. Independent lists — recessional isn't derived from processional
+  // (different pairing, someone leaving early, etc. are all real cases) —
+  // the frontend backfills recessionalOrder once from the old reverse-of-
+  // processional behavior for data saved before this field existed.
   processionalOrder: [] as { id: number; name: string; role?: string; emoji?: string; startAt: number }[],
+  recessionalOrder: [] as { id: number; name: string; role?: string; emoji?: string; startAt: number }[],
   nextId: 1,
 };
 

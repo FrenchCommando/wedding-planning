@@ -114,7 +114,7 @@
 
   .procEditRow{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
   .procEditRow input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font-size:13px;font-family:inherit;}
-  .procEditRow .p-emoji{width:40px;text-align:center;}
+  .procEditRow .p-emoji{width:64px;text-align:center;}
   .procEditRow .p-name{flex:2;}
   .procEditRow .p-role{flex:2;}
   .procEditRow .p-start{width:70px;}
@@ -191,20 +191,25 @@ async function loadCeremony(){
   const body=await res.json();
   data=body.data;
   revisionId=body.revisionId;
+  if(data.recessionalOrder===undefined)data.recessionalOrder=deriveRecessionalFromProcessional();
 }
 
 // Moments titled "processional" or "recessional" (case-insensitive) get the
-// aisle diagram + timeline. Recessional reuses the same processionalOrder
-// data reversed (couple exits first, wedding party follows), walking back
-// from the altar toward the entrance — no separate data field needed.
+// aisle diagram + timeline. Each has its own independent order/timing list
+// (processionalOrder / recessionalOrder) — who exits isn't always just who
+// entered in reverse (different pairing, someone leaving early, etc.), so
+// this isn't derived, it's edited separately.
 function isProcessional(title){return /processional/i.test(title||"")&&!/recessional/i.test(title||"");}
 function isRecessional(title){return /recessional/i.test(title||"");}
 function fmtOffset(sec){const m=Math.floor(sec/60),s=sec%60;return m?`${m}:${String(s).padStart(2,"0")}`:`0:${String(s).padStart(2,"0")}`;}
 
-// Reverses the walking order while preserving the original pacing between
-// people (the gaps between consecutive startAt values), so the recessional
-// isn't just instantly-reversed timing.
-function computeRecessionalOrder(){
+// One-time migration for ceremony data saved before recessionalOrder
+// existed as its own field: seeds it from the old reverse-of-processional
+// computation (preserving the original pacing between people) as a
+// starting point, editable independently from then on. Only runs if the
+// field is entirely absent — an intentionally empty list (someone cleared
+// it) is left alone.
+function deriveRecessionalFromProcessional(){
   const sorted=(data.processionalOrder||[]).slice().sort((a,b)=>a.startAt-b.startAt);
   if(!sorted.length)return [];
   const gaps=sorted.slice(1).map((p,i)=>p.startAt-sorted[i].startAt).reverse();
@@ -212,7 +217,7 @@ function computeRecessionalOrder(){
   let cum=0;
   return reversedPeople.map((p,i)=>{
     if(i>0)cum+=gaps[i-1];
-    return {...p,startAt:cum};
+    return {...p,id:(data.nextId=(data.nextId||1)+1),startAt:cum};
   });
 }
 
@@ -222,8 +227,8 @@ function computeRecessionalOrder(){
 // distance (via PIN_PX_PER_SEC below), which is what actually drives motion.
 const WALK_DURATION=6; // planned seconds each person takes to walk the aisle
 
-function aisleHTML(reverse){
-  const order=reverse?computeRecessionalOrder():(data.processionalOrder||[]).slice().sort((a,b)=>a.startAt-b.startAt);
+function aisleHTML(order,reverse){
+  order=(order||[]).slice().sort((a,b)=>a.startAt-b.startAt);
   if(!order.length)return "";
   const maxStart=Math.max(...order.map(p=>p.startAt));
   const totalDuration=maxStart+WALK_DURATION;
@@ -384,7 +389,7 @@ function renderView(){
           ${m.description?`<p>${esc(m.description)}</p>`:""}
           ${m.participants?`<div class="participants">${esc(m.participants)}</div>`:""}
         </div>
-        ${isProcessional(m.title)?aisleHTML(false):isRecessional(m.title)?aisleHTML(true):""}
+        ${isProcessional(m.title)?aisleHTML(data.processionalOrder,false):isRecessional(m.title)?aisleHTML(data.recessionalOrder,true):""}
       </div>
     `;
     }).join("")+`
@@ -422,13 +427,23 @@ function renderEdit(){
       data.moments.splice(i,1);renderEdit();
     });
   });
-  el.insertAdjacentHTML("beforeend", processionalOrderEditHTML());
-  wireProcessionalOrderEdit(el);
+  for(const cfg of ORDER_LISTS){
+    el.insertAdjacentHTML("beforeend", orderEditHTML(cfg));
+    wireOrderEdit(el,cfg);
+  }
   document.getElementById("addBar").style.display="block";
 }
 
-function processionalOrderEditHTML(){
-  const order=data.processionalOrder||[];
+// Processional and recessional orders are the same shape and the same
+// editing behavior — one parameterized pair of functions for both instead
+// of two near-identical copies (see ORDER_LISTS below for the two configs).
+const ORDER_LISTS=[
+  {key:"processionalOrder",idPrefix:"proc",heading:"Processional order (who walks in, and when — seconds after the processional starts)"},
+  {key:"recessionalOrder",idPrefix:"rec",heading:"Recessional order (who walks out, and when — seconds after the recessional starts)"},
+];
+
+function orderEditHTML({key,idPrefix,heading}){
+  const order=data[key]||[];
   const rows=order.map((p,i)=>`
     <div class="procEditRow" data-i="${i}">
       <input class="p-start" data-field="startAt" type="number" min="0" step="1" value="${p.startAt}" placeholder="Sec">
@@ -441,35 +456,35 @@ function processionalOrderEditHTML(){
   return `
     <div class="editRow">
       <div style="padding-left:0">
-        <h2 style="font-size:14px;margin:0 0 8px">Processional order (who walks in, and when — seconds after the processional starts)</h2>
-        <div id="procRows">${rows}</div>
-        <div class="rowbar"><button class="secondary" id="addProc" style="width:auto">+ Add person</button></div>
+        <h2 style="font-size:14px;margin:0 0 8px">${esc(heading)}</h2>
+        <div id="${idPrefix}Rows">${rows}</div>
+        <div class="rowbar"><button class="secondary" id="add${idPrefix[0].toUpperCase()+idPrefix.slice(1)}" style="width:auto">+ Add person</button></div>
       </div>
     </div>
   `;
 }
 
-function wireProcessionalOrderEdit(el){
-  if(!data.processionalOrder)data.processionalOrder=[];
-  const rowsEl=el.querySelector("#procRows");
+function wireOrderEdit(el,{key,idPrefix}){
+  if(!data[key])data[key]=[];
+  const rowsEl=el.querySelector(`#${idPrefix}Rows`);
   rowsEl.querySelectorAll(".procEditRow").forEach(row=>{
     const i=Number(row.dataset.i);
     row.querySelectorAll("[data-field]").forEach(inp=>{
       inp.addEventListener("input",()=>{
         const val=inp.dataset.field==="startAt"?Number(inp.value)||0:inp.value;
-        data.processionalOrder[i][inp.dataset.field]=val;
+        data[key][i][inp.dataset.field]=val;
       });
     });
     row.querySelector('[data-action="removeP"]').addEventListener("click",()=>{
-      data.processionalOrder.splice(i,1);renderEdit();
+      data[key].splice(i,1);renderEdit();
     });
   });
-  const addBtn=el.querySelector("#addProc");
+  const addBtn=el.querySelector(`#add${idPrefix[0].toUpperCase()+idPrefix.slice(1)}`);
   if(addBtn)addBtn.addEventListener("click",()=>{
-    const nextStart=data.processionalOrder.length
-      ? Math.max(...data.processionalOrder.map(p=>p.startAt))+8
+    const nextStart=data[key].length
+      ? Math.max(...data[key].map(p=>p.startAt))+8
       : 0;
-    data.processionalOrder.push({id:(data.nextId||1),name:"",role:"",emoji:"🚶",startAt:nextStart});
+    data[key].push({id:(data.nextId||1),name:"",role:"",emoji:"🚶",startAt:nextStart});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
   });

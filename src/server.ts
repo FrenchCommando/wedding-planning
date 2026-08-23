@@ -1,12 +1,11 @@
 import "dotenv/config";
 import express from "express";
 import cookieParser from "cookie-parser";
-import { readSession, requireRole } from "./auth/session.js";
+import { readSession } from "./auth/session.js";
 import loginRouter from "./auth/login.js";
-import { createGuestToken } from "./auth/login.js";
 import seatingRouter from "./routes/seating.js";
 import ceremonyRouter from "./routes/ceremony.js";
-import { asyncRoute } from "./asyncHandler.js";
+import adminRouter from "./routes/admin.js";
 
 const app = express();
 
@@ -17,6 +16,7 @@ app.use(readSession);
 app.use("/api", loginRouter);
 app.use("/api", seatingRouter);
 app.use("/api", ceremonyRouter);
+app.use("/api", adminRouter);
 
 app.get("/api/whoami", (req, res) => {
   res.json({ session: req.session ?? null });
@@ -36,17 +36,6 @@ app.post("/api/logout", (_req, res) => {
   res.clearCookie("session");
   res.json({ ok: true });
 });
-
-// Admin: mint a household guest link. Editor-only.
-app.post("/api/admin/guest-token", requireRole("editor"), asyncRoute(async (req, res) => {
-  const { household } = req.body ?? {};
-  if (typeof household !== "string" || !household.trim()) {
-    res.status(400).json({ error: "household required" });
-    return;
-  }
-  const token = await createGuestToken(household.trim());
-  res.json({ household, token });
-}));
 
 app.use(express.static("public"));
 app.use("/seating-chart", express.static("seating-chart"));

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guest links — Hanna & Martial Planning</title>
+<style>
+  :root{
+    color-scheme:light dark;
+    --bg:#f6f1e7; --bg2:#efe6d3; --panel:#fffdf8; --ink:#2b2620; --muted:#8a8071;
+    --line:#e2d8c3; --accent:#a9744f; --accent-ink:#fff; --danger:#b2483c;
+    --shadow:0 1px 2px rgba(60,45,20,.05),0 10px 30px rgba(60,45,20,.08);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#1b1712; --bg2:#241f18; --panel:#26221b; --ink:#efe9dc; --muted:#a39a87;
+      --line:#3a3428; --accent:#c99361; --accent-ink:#20160c; --danger:#e0685c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--ink);background:radial-gradient(ellipse at top,var(--bg2),var(--bg));padding:40px 20px 80px;
+  }
+  #app{width:100%;max-width:720px;margin:0 auto;}
+  h1{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-size:26px;font-weight:400;margin:0 0 2px;}
+  .sub{color:var(--muted);margin-bottom:28px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
+  a.back{color:var(--muted);text-decoration:none;font-size:13px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-bottom:20px;box-shadow:var(--shadow);}
+  .card h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 14px;font-weight:600;}
+  input,button,select{font:inherit;}
+  input{display:block;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:var(--panel);color:var(--ink);}
+  input:focus{outline:none;border-color:var(--accent);}
+  .row{display:flex;gap:8px;}
+  .row input{flex:1;}
+  button{padding:10px 16px;border:none;border-radius:8px;background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;}
+  button:hover{opacity:.88;}
+  button.secondary{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:400;}
+  .err{color:var(--danger);font-size:12px;margin-top:8px;min-height:1em;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;}
+  tr:last-child td{border-bottom:0;}
+  .token{font-family:ui-monospace,"SF Mono",Consolas,monospace;letter-spacing:.05em;}
+  .link-row{display:flex;align-items:center;gap:6px;}
+  .link-row input{flex:1;font-family:ui-monospace,"SF Mono",Consolas,monospace;font-size:12px;padding:5px 8px;}
+  .copy-btn{padding:5px 9px;font-size:12px;}
+  .when{color:var(--muted);white-space:nowrap;}
+  .empty{color:var(--muted);text-align:center;padding:20px 0;}
+  .denied{text-align:center;color:var(--muted);padding:60px 20px;}
+</style>
+</head>
+<body>
+<div id="app">Loading…</div>
+<script>
+async function api(path, opts) {
+  return fetch("/api" + path, { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...opts });
+}
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function fmtWhen(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString(undefined, {day:"numeric", month:"short", year:"numeric"});
+}
+
+async function loadHouseholds() {
+  const res = await api("/admin/guest-tokens");
+  if (!res.ok) throw new Error("failed to load guest links");
+  const body = await res.json();
+  return body.households;
+}
+
+function renderTable(households) {
+  if (!households.length) return `<p class="empty">No guest links minted yet.</p>`;
+  const rows = households.map(h => {
+    const link = `${location.origin}/?token=${encodeURIComponent(h.token)}`;
+    return `
+      <tr>
+        <td>${esc(h.household)}</td>
+        <td class="token">${esc(h.token)}</td>
+        <td class="when">${esc(fmtWhen(h.createdAt))}</td>
+        <td>
+          <div class="link-row">
+            <input readonly value="${esc(link)}" onclick="this.select()">
+            <button class="secondary copy-btn" data-link="${esc(link)}">Copy</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+  return `<table><thead><tr><th>Household</th><th>Code</th><th>Created</th><th>Link</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function refreshTable() {
+  const box = document.getElementById("tableBox");
+  box.innerHTML = `<p class="empty">Loading…</p>`;
+  try {
+    const households = await loadHouseholds();
+    box.innerHTML = renderTable(households);
+    box.querySelectorAll(".copy-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(btn.dataset.link);
+        const original = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => { btn.textContent = original; }, 1400);
+      });
+    });
+  } catch (e) {
+    box.innerHTML = `<p class="empty">Couldn't load guest links — try reloading.</p>`;
+  }
+}
+
+function renderAdmin() {
+  document.getElementById("app").innerHTML = `
+    <a class="back" href="/">&larr; Home</a>
+    <h1>Guest links</h1>
+    <div class="sub">One link per household — see CLAUDE.md for the guest auth design</div>
+
+    <div class="card">
+      <h2>New household</h2>
+      <div class="row">
+        <input id="householdInput" placeholder="e.g. Smith Family" autocomplete="off">
+        <button id="mintBtn">Generate link</button>
+      </div>
+      <div class="err" id="mintErr"></div>
+    </div>
+
+    <div class="card">
+      <h2>Existing links</h2>
+      <div id="tableBox"><p class="empty">Loading…</p></div>
+    </div>
+  `;
+
+  document.getElementById("mintBtn").addEventListener("click", async () => {
+    const input = document.getElementById("householdInput");
+    const errEl = document.getElementById("mintErr");
+    errEl.textContent = "";
+    const household = input.value.trim();
+    if (!household) { errEl.textContent = "Enter a household name first."; return; }
+    const res = await api("/admin/guest-token", { method: "POST", body: JSON.stringify({ household }) });
+    if (!res.ok) { errEl.textContent = "Couldn't create that link — try again."; return; }
+    input.value = "";
+    await refreshTable();
+  });
+  document.getElementById("householdInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("mintBtn").click();
+  });
+
+  refreshTable();
+}
+
+function renderDenied() {
+  document.getElementById("app").innerHTML = `
+    <div class="denied">
+      <p>Editor login required.</p>
+      <p><a class="back" href="/">&larr; Back to home</a></p>
+    </div>`;
+}
+
+async function init() {
+  const res = await api("/whoami");
+  const body = await res.json();
+  if (body.session && body.session.role === "editor") renderAdmin();
+  else renderDenied();
+}
+init();
+</script>
+</body>
+</html>
