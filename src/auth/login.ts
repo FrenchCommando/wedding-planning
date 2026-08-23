@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { Router } from "express";
 import { readJsonFile, writeJsonFile } from "../drive.js";
 import { issueSession } from "./session.js";
+import { asyncRoute } from "../asyncHandler.js";
 
 interface GuestAuthFile {
   households: { household: string; token: string; createdAt: string }[];
@@ -42,7 +43,7 @@ router.post("/login/vendor", (req, res) => {
   res.json({ ok: true });
 });
 
-router.post("/login/guest", async (req, res) => {
+router.post("/login/guest", asyncRoute(async (req, res) => {
   const { token } = req.body ?? {};
   if (typeof token !== "string") {
     res.status(400).json({ error: "token required" });
@@ -56,7 +57,7 @@ router.post("/login/guest", async (req, res) => {
   }
   issueSession(res, { role: "guest", household: match.household });
   res.json({ ok: true });
-});
+}));
 
 // Crockford-base32-style alphabet, excludes ambiguous 0/O, 1/I/L.
 const TOKEN_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";

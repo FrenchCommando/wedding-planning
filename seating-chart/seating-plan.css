@@ -193,6 +193,10 @@ input,button,select{font:inherit}
 .help-card kbd{background:var(--kbd-bg);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:12px;font-family:inherit}
 .help-close{float:right;border:1px solid var(--line);background:var(--panel);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1}
 .help-close:hover{background:var(--hover)}
+.hist-row{display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line)}
+.hist-row:last-child{border-bottom:0}
+.hist-when{flex:1;font-size:13px}
+.hist-empty{color:var(--muted);font-size:13px;padding:8px 4px}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#1e2430;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
 .toast.show{opacity:1}
 

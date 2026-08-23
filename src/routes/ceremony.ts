@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { readJsonFile, writeJsonFile } from "../drive.js";
 import { requireRole } from "../auth/session.js";
+import { asyncRoute } from "../asyncHandler.js";
 
 const FILE_NAME = "ceremony.json";
 
@@ -14,16 +15,16 @@ const DEFAULT_STATE = {
 
 const router = Router();
 
-router.get("/ceremony", requireRole("editor", "vendor", "guest"), async (_req, res) => {
+router.get("/ceremony", requireRole("editor", "vendor", "guest"), asyncRoute(async (_req, res) => {
   const { data, revisionId } = await readJsonFile(FILE_NAME, DEFAULT_STATE);
   res.json({ data, revisionId });
-});
+}));
 
 // Simpler than seating's PUT: no plain-English conflict diff, just refuse
 // on a stale revision and ask to reload — per the spec, ceremony/playlist/
 // transportation are append-only-ish lists edited by ~2 people, not a real
 // concurrent-collision risk worth the extra diff machinery seating needed.
-router.put("/ceremony", requireRole("editor"), async (req, res) => {
+router.put("/ceremony", requireRole("editor"), asyncRoute(async (req, res) => {
   const { data, revisionId } = req.body ?? {};
   if (!data || typeof revisionId !== "string") {
     res.status(400).json({ error: "data and revisionId required" });
@@ -36,6 +37,6 @@ router.put("/ceremony", requireRole("editor"), async (req, res) => {
     return;
   }
   res.json({ revisionId: result.revisionId });
-});
+}));
 
 export default router;

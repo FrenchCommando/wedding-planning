@@ -302,13 +302,13 @@ function describeConflict(changes){
   if(!changes.length)return"Someone else saved changes while you were editing.";
   return"Someone else saved changes while you were editing:\n\n"+changes.map(c=>"• "+c).join("\n");
 }
-async function saveToServer(){
-  const res=await api("/seating",{method:"PUT",body:JSON.stringify({data:state,baseData,baseRevisionId})});
+async function saveToServer(keepForever){
+  const res=await api("/seating",{method:"PUT",body:JSON.stringify({data:state,baseData,baseRevisionId,keepForever})});
   if(res.ok){
     const body=await res.json();
     baseData=deepCopy(state);
     baseRevisionId=body.revisionId;
-    markSaved();toast("Saved");
+    markSaved();toast(keepForever?"Saved as milestone — this version stays in Drive's history":"Saved");
     return;
   }
   if(res.status===409){
@@ -336,8 +336,8 @@ async function saveToServer(){
   }
   alert("Save failed — check your connection and try again.");
 }
-async function saveAsHTML(){
-  try{await saveToServer();}catch(e){alert("Save failed: "+(e&&e.message||e));}
+async function saveAsHTML(clickEvent){
+  try{await saveToServer(!!(clickEvent&&clickEvent.shiftKey));}catch(e){alert("Save failed: "+(e&&e.message||e));}
 }
 
 /* ---------- Helpers ---------- */
@@ -855,12 +855,43 @@ document.getElementById("pdfBtn").addEventListener("click",openPDF);
 document.getElementById("readonlyBtn").addEventListener("click",downloadReadOnly);
 const help=document.getElementById("help");
 document.getElementById("helpBtn").addEventListener("click",()=>{help.hidden=false;});
+const historyPanel=document.getElementById("history");
+async function openHistory(){
+  historyPanel.hidden=false;
+  const box=document.getElementById("historyList");
+  box.innerHTML='<p class="hist-empty">Loading…</p>';
+  const res=await api("/seating/revisions");
+  if(!res.ok){box.innerHTML='<p class="hist-empty">Couldn\'t load history — try again.</p>';return;}
+  const {revisions}=await res.json();
+  if(!revisions.length){box.innerHTML='<p class="hist-empty">No past saves yet.</p>';return;}
+  box.innerHTML="";
+  for(const r of revisions){
+    const row=document.createElement("div");row.className="hist-row";
+    row.innerHTML=`<span class="hist-when">${r.keepForever?'<span class="pin">📌</span> ':""}${esc(fmtRev(r.modifiedTime))}</span>`+
+      `<button class="btn small" data-id="${esc(r.id)}">Compare with current</button>`;
+    row.querySelector("button").addEventListener("click",()=>compareRevision(r.id));
+    box.appendChild(row);
+  }
+}
+async function compareRevision(id){
+  const res=await api(`/seating/revisions/${encodeURIComponent(id)}/diff`);
+  if(!res.ok){
+    const body=await res.json().catch(()=>null);
+    alert(body&&body.error?body.error:"Couldn't load that comparison — try again.");
+    return;
+  }
+  const {changes}=await res.json();
+  alert(changes.length?"Changes since that save:\n\n"+changes.map(c=>"• "+c).join("\n"):"No changes since that save.");
+}
+document.getElementById("historyBtn").addEventListener("click",openHistory);
+document.getElementById("historyClose").addEventListener("click",()=>{historyPanel.hidden=true;});
+historyPanel.addEventListener("click",e=>{if(e.target.id==="history")historyPanel.hidden=true;});
 const appEl=document.getElementById("app");
 document.getElementById("sideToggle").addEventListener("click",()=>appEl.classList.toggle("side-open"));
 document.getElementById("sideBackdrop").addEventListener("click",()=>appEl.classList.remove("side-open"));
 document.getElementById("helpClose").addEventListener("click",()=>{help.hidden=true;});
 help.addEventListener("click",e=>{if(e.target.id==="help")help.hidden=true;});
-window.addEventListener("keydown",e=>{if(e.key==="Escape"){help.hidden=true;appEl.classList.remove("side-open");if(swapFrom){swapFrom=null;renderAll();toast("Swap cancelled");}}});
+window.addEventListener("keydown",e=>{if(e.key==="Escape"){help.hidden=true;historyPanel.hidden=true;appEl.classList.remove("side-open");if(swapFrom){swapFrom=null;renderAll();toast("Swap cancelled");}}});
 document.getElementById("viewPlan").addEventListener("click",()=>setView("plan"));
 document.getElementById("viewTable").addEventListener("click",()=>setView("table"));
 document.getElementById("viewParties").addEventListener("click",()=>setView("parties"));

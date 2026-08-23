@@ -6,6 +6,7 @@ import loginRouter from "./auth/login.js";
 import { createGuestToken } from "./auth/login.js";
 import seatingRouter from "./routes/seating.js";
 import ceremonyRouter from "./routes/ceremony.js";
+import { asyncRoute } from "./asyncHandler.js";
 
 const app = express();
 
@@ -37,7 +38,7 @@ app.post("/api/logout", (_req, res) => {
 });
 
 // Admin: mint a household guest link. Editor-only.
-app.post("/api/admin/guest-token", requireRole("editor"), async (req, res) => {
+app.post("/api/admin/guest-token", requireRole("editor"), asyncRoute(async (req, res) => {
   const { household } = req.body ?? {};
   if (typeof household !== "string" || !household.trim()) {
     res.status(400).json({ error: "household required" });
@@ -45,11 +46,21 @@ app.post("/api/admin/guest-token", requireRole("editor"), async (req, res) => {
   }
   const token = await createGuestToken(household.trim());
   res.json({ household, token });
-});
+}));
 
 app.use(express.static("public"));
 app.use("/seating-chart", express.static("seating-chart"));
 app.use("/ceremony", express.static("ceremony"));
+
+// Catch-all error handler — must be last, and must take 4 params (that's
+// what makes Express treat it as an error middleware rather than a normal
+// one). Turns anything forwarded via next(err), including rejections
+// asyncRoute() catches, into a clean 500 instead of the crash this app hit
+// with a real Drive API error before this middleware existed.
+app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error(err);
+  res.status(500).json({ error: "server error" });
+});
 
 const port = Number(process.env.PORT ?? 3000);
 app.listen(port, () => {

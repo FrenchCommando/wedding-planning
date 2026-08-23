@@ -44,7 +44,8 @@
       <button class="btn small" id="clearSeats">Clear seats</button>
       <button class="btn small" id="pdfBtn" title="Open a clean printable layout — choose “Save as PDF” in the print dialog">PDF</button>
       <button class="btn small" id="readonlyBtn" title="Download a lightweight, view-only copy you can share — the plan, no editing tools">Read-only</button>
-      <button class="btn small" id="saveHtmlBtn" title="Save your plan into the file — first time asks where, then it's one click">Saved ✓</button>
+      <button class="btn small" id="historyBtn" title="See past saves and compare any of them with the current plan">History</button>
+      <button class="btn small" id="saveHtmlBtn" title="Save to the server. Shift+click to save as a milestone Drive keeps forever (e.g. final chart before printing) instead of letting it age out.">Saved ✓</button>
       <button class="btn small" id="discardBtn" title="Throw away unsaved changes and go back to the file's last saved version">Discard changes</button>
       <button class="btn small" id="helpBtn" title="How to use this">? Help</button>
     </div>
@@ -59,6 +60,14 @@
   </main>
 </div>
 <div id="printRoot"></div>
+<div class="overlay" id="history" hidden>
+  <div class="help-card">
+    <button class="help-close" id="historyClose" title="Close">×</button>
+    <h2>Past saves</h2>
+    <p class="lead">Each save keeps a Drive revision. Pick one to see a plain-English diff against the current plan. Regular saves age out of Drive's history over time — <span class="pin">📌</span> marks ones saved as a milestone (Shift+click Save), which Drive keeps forever.</p>
+    <div id="historyList"></div>
+  </div>
+</div>
 <div class="overlay" id="help" hidden="">
   <div class="help-card">
     <button class="help-close" id="helpClose" title="Close">×</button>

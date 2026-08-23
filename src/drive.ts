@@ -222,3 +222,38 @@ export async function seedJsonFile<T>(name: string, data: T): Promise<void> {
   const result = await writeJsonFile(name, data, revisionId);
   if ("conflict" in result) throw new Error(`seedJsonFile: conflict writing ${name}`);
 }
+
+export interface RevisionSummary {
+  id: string;
+  modifiedTime: string;
+  keepForever: boolean;
+}
+
+/**
+ * Lists past Drive revisions of a data file, newest first. Revisions
+ * without `keepForever: true` are subject to Drive's own retention window
+ * and can disappear over time — this just reports whatever Drive still has,
+ * it doesn't guarantee full history back to file creation.
+ */
+export async function listRevisions(name: string): Promise<RevisionSummary[]> {
+  const drive = await driveClient();
+  const fileId = await findFileId(drive, name);
+  if (!fileId) return [];
+  const res = await drive.revisions.list({
+    fileId,
+    fields: "revisions(id, modifiedTime, keepForever)",
+  });
+  const revisions = res.data.revisions ?? [];
+  return revisions
+    .map((r) => ({ id: r.id!, modifiedTime: r.modifiedTime!, keepForever: !!r.keepForever }))
+    .reverse();
+}
+
+/** Fetches the JSON content of one past revision of a data file by revision id. */
+export async function getRevision<T>(name: string, revisionId: string): Promise<T> {
+  const drive = await driveClient();
+  const fileId = await findFileId(drive, name);
+  if (!fileId) throw new Error(`getRevision: ${name} does not exist`);
+  const res = await drive.revisions.get({ fileId, revisionId, alt: "media" }, { responseType: "json" });
+  return res.data as T;
+}
