@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome Drinks</title>
+<link rel="stylesheet" href="welcome-drinks.css">
+</head>
+<body>
+<div class="topbar">
+  <a href="/">&larr; Home</a>
+  <span id="roleTag" style="font-size:12px;opacity:.6"></span>
+  <span id="editControls" style="display:none"><button class="secondary" id="editToggle">Edit</button></span>
+  <button class="secondary" id="historyBtn" style="display:none">History</button>
+</div>
+<h1>Welcome Drinks</h1>
+<div class="sub" id="subTitle"></div>
+<div id="err"></div>
+
+<div class="wrap">
+  <div class="section">
+    <h2>Schedule</h2>
+    <div id="schedBox"></div>
+  </div>
+  <div class="section">
+    <h2>Guest list</h2>
+    <div class="count" id="guestCount"></div>
+    <div id="guestBox"></div>
+  </div>
+  <div class="addBar" id="addBar" style="display:none;gap:10px">
+    <button class="secondary" id="addSched">+ Add schedule item</button>
+    <button class="secondary" id="addGuest">+ Add guest</button>
+  </div>
+</div>
+
+<div class="overlay" id="history" hidden>
+  <div class="overlay-card">
+    <button class="overlay-close" id="historyClose" title="Close">×</button>
+    <h2>Past saves</h2>
+    <p class="lead">Each save keeps a Drive revision. Pick one to see what changed since then. Regular saves can age out of Drive's history over time.</p>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script src="welcome-drinks.js"></script>
+</body>
+</html>

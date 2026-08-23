@@ -1,0 +1,11 @@
+{
+  "schedule": [
+    { "id": 1, "time": "7:00 PM", "title": "Doors open", "description": "Bar and light bites available." },
+    { "id": 2, "time": "9:00 PM", "title": "Wrap up", "description": "" }
+  ],
+  "guests": [
+    { "id": 3, "name": "Alice Test", "household": "Alice Test", "dietary": "", "notes": "" },
+    { "id": 4, "name": "Bob Test", "household": "Alice Test", "dietary": "Vegetarian", "notes": "" }
+  ],
+  "nextId": 5
+}

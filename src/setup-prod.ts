@@ -32,7 +32,9 @@ async function main() {
 
   await readJsonFile("guests-auth.json", { households: [] });
   await readJsonFile("seating.json", loadSeatingSeed());
-  await readJsonFile("ceremony.json", { moments: [], processionalOrder: [], nextId: 1 });
+  await readJsonFile("ceremony.json", { moments: [], processionalOrder: [], recessionalOrder: [], nextId: 1 });
+  await readJsonFile("welcome-drinks.json", { schedule: [], guests: [], nextId: 1 });
+  await readJsonFile("sunday-brunch.json", { schedule: [], guests: [], nextId: 1 });
 
   console.log("Drive data folder and files ready.");
 }
