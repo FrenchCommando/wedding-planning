@@ -1,0 +1,164 @@
+name: Deploy to Pi
+
+# Trigger policy — deliberately narrow.
+#
+# This repo is PUBLIC and this workflow runs on a SELF-HOSTED runner on a
+# home Raspberry Pi. `pull_request` (and especially `pull_request_target`)
+# must never be added here: on a public repo, anyone can open a PR, and a
+# PR-triggered self-hosted job runs that stranger's code on the Pi. Push to
+# master is safe because only people with write access can push.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# Least privilege: this job only touches the Pi, never the GitHub API.
+permissions:
+  contents: read
+
+# Never let two deploys interleave on the single Pi. A newer push supersedes
+# an older in-flight run rather than racing it through docker compose.
+concurrency:
+  group: deploy-pi
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Inert in forks. A fork running its own self-hosted runner is its own
+    # business, but a fork of THIS repo must not attempt this deploy.
+    if: github.repository == 'FrenchCommando/wedding-planning'
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 20
+
+    env:
+      # ── SET THIS ────────────────────────────────────────────────────────
+      # Absolute path to the EXISTING clone on the Pi — the one that already
+      # holds .env.production and data/drive-token.json. Set it as a
+      # repository variable: Settings → Secrets and variables → Actions →
+      # Variables → New repository variable, name APP_DIR.
+      # The fallback below is a placeholder and will fail the job loudly.
+      APP_DIR: ${{ vars.APP_DIR || '/CHANGE-ME/path/to/wedding-planning' }}
+      # Where the container publishes on the Pi (docker-compose.yml maps
+      # 127.0.0.1:3000). Override via a repo variable only if that changes.
+      APP_URL: ${{ vars.APP_URL || 'http://127.0.0.1:3000' }}
+
+    steps:
+      # NOTE: there is deliberately no actions/checkout step.
+      #
+      # The runner's own _work checkout is a bare clone of tracked files
+      # only. The Pi's real deploy needs .env.production, the filled-in
+      # nginx server block, and data/drive-token.json — all intentionally
+      # untracked and never committed. Deploying from _work would therefore
+      # ship a container with no Drive token and no passwords. This job
+      # instead operates on the existing, fully-provisioned clone at
+      # $APP_DIR, exactly as a manual deploy would.
+
+      - name: Validate configuration
+        run: |
+          set -euo pipefail
+          if [ "${APP_DIR}" = "/CHANGE-ME/path/to/wedding-planning" ]; then
+            echo "::error::APP_DIR is still the placeholder. Set the APP_DIR repository variable to the clone path on the Pi."
+            exit 1
+          fi
+          if [ ! -d "${APP_DIR}/.git" ]; then
+            echo "::error::${APP_DIR} is not a git clone. APP_DIR must point at the existing wedding-planning clone on the Pi."
+            exit 1
+          fi
+          if [ ! -f "${APP_DIR}/.env.production" ]; then
+            echo "::error::${APP_DIR}/.env.production is missing. It is untracked by design and must be scp'd to the Pi by hand."
+            exit 1
+          fi
+          echo "APP_DIR=${APP_DIR} looks good."
+
+      - name: Pull latest master
+        run: |
+          set -euo pipefail
+          cd "${APP_DIR}"
+          git fetch --prune origin
+          # --ff-only: refuse to create a merge commit. If the Pi's clone has
+          # drifted (e.g. someone edited a tracked file there), fail loudly
+          # rather than silently merging on a production host.
+          git checkout master
+          git pull --ff-only origin master
+          echo "Deployed commit: $(git rev-parse HEAD)"
+
+      - name: Verify the Pi is on the commit that triggered this run
+        # Skipped for workflow_dispatch, where re-running an older ref is legitimate.
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          cd "${APP_DIR}"
+          LOCAL="$(git rev-parse HEAD)"
+          if [ "${LOCAL}" != "${GITHUB_SHA}" ]; then
+            echo "::error::Pi is at ${LOCAL} but this run is for ${GITHUB_SHA}. Refusing to claim a successful deploy."
+            exit 1
+          fi
+
+      - name: Build image
+        run: |
+          set -euo pipefail
+          cd "${APP_DIR}"
+          docker compose build
+
+      - name: Start container
+        run: |
+          set -euo pipefail
+          cd "${APP_DIR}"
+          docker compose up -d
+          docker compose ps
+
+      # The gap this closes: the welcome-drinks / sunday-brunch outage was a
+      # missing COPY in the Dockerfile. Everything "succeeded" — build, up,
+      # nginx — and the pages still 404'd, because nothing in the chain ever
+      # asked the running app for a page. These asserts do exactly that.
+      - name: Verify pages respond
+        run: |
+          set -euo pipefail
+          PAGES="
+          /
+          /seating-chart/seating-plan.html
+          /ceremony/ceremony.html
+          /welcome-drinks/welcome-drinks.html
+          /sunday-brunch/sunday-brunch.html
+          "
+
+          # Give the container a moment to bind its port before asserting.
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null "${APP_URL}/" 2>/dev/null; then
+              echo "App is up after ${i}s."
+              break
+            fi
+            if [ "${i}" = "30" ]; then
+              echo "::error::App did not respond on ${APP_URL} within 30s."
+              docker compose -f "${APP_DIR}/docker-compose.yml" logs --tail=50 || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          FAILED=0
+          for p in ${PAGES}; do
+            CODE="$(curl -s -o /dev/null -w '%{http_code}' "${APP_URL}${p}")"
+            if [ "${CODE}" = "200" ]; then
+              echo "  OK   ${CODE}  ${p}"
+            else
+              echo "  FAIL ${CODE}  ${p}"
+              FAILED=1
+            fi
+          done
+
+          if [ "${FAILED}" = "1" ]; then
+            echo "::error::One or more pages did not return 200. A missing COPY line in the Dockerfile produces exactly this."
+            docker compose -f "${APP_DIR}/docker-compose.yml" logs --tail=50 || true
+            exit 1
+          fi
+          echo "All pages returned 200."
+
+      - name: Report
+        if: always()
+        run: |
+          cd "${APP_DIR}" 2>/dev/null || exit 0
+          echo "### Deploy result" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Commit: \`$(git rev-parse --short HEAD)\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- Status: ${{ job.status }}" >> "${GITHUB_STEP_SUMMARY}"
