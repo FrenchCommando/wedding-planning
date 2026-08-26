@@ -16,6 +16,8 @@ COPY --from=build /app/dist ./dist
 COPY public ./public
 COPY seating-chart ./seating-chart
 COPY ceremony ./ceremony
+COPY welcome-drinks ./welcome-drinks
+COPY sunday-brunch ./sunday-brunch
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
