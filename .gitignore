@@ -4,3 +4,4 @@ dist/
 !.env.example
 data/*
 !data/venue-seed.json.example
+.deploy-key*
