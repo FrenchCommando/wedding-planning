@@ -129,7 +129,12 @@ sysadmin access to the Pi, not guest/vendor-facing app auth.
 - Losing the log file in a Pi failure is a non-event; losing planning data
   is not — hence the split between "durable data on Drive" and "operational
   logs on the Pi."
-- **Not yet implemented.**
+- **Built.** `src/activity-log.ts` (append-only tab-separated file at
+  `ACTIVITY_LOG_PATH`, default `./data/activity.log`; `logRequest()` called
+  from each route on login/save), admin route `GET /api/admin/activity`
+  (`src/routes/admin.ts`), page at `public/activity.html`, linked from the
+  landing page nav (editor-only). No Drive archive/flush — logs stay
+  Pi-local only, per the "non-event to lose" reasoning above.
 
 ## Backend implementation
 
