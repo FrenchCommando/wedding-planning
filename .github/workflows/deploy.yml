@@ -31,13 +31,11 @@ jobs:
     timeout-minutes: 20
 
     env:
-      # ── SET THIS ────────────────────────────────────────────────────────
       # Absolute path to the EXISTING clone on the Pi — the one that already
-      # holds .env.production and data/drive-token.json. Set it as a
-      # repository variable: Settings → Secrets and variables → Actions →
-      # Variables → New repository variable, name APP_DIR.
-      # The fallback below is a placeholder and will fail the job loudly.
-      APP_DIR: ${{ vars.APP_DIR || '/CHANGE-ME/path/to/wedding-planning' }}
+      # holds .env.production and data/drive-token.json. Can be overridden
+      # via a repository variable (Settings → Secrets and variables →
+      # Actions → Variables → APP_DIR) without a commit, if it ever changes.
+      APP_DIR: ${{ vars.APP_DIR || '/home/frenchcommando/wedding-planning' }}
       # Where the container publishes on the Pi (docker-compose.yml maps
       # 127.0.0.1:3000). Override via a repo variable only if that changes.
       APP_URL: ${{ vars.APP_URL || 'http://127.0.0.1:3000' }}
