@@ -225,6 +225,14 @@ sysadmin access to the Pi, not guest/vendor-facing app auth.
   the real `.env` (dev) and `.env.production` (prod) are never committed —
   `.gitignore` excludes `.env*` except `.env.example`. On the Pi, `.env`
   would be scp'd directly, read by `docker-compose.yml` via `env_file`.
+- **`.deploy-key` / `.deploy-key.pub`**: an SSH keypair, scoped to this repo
+  only (registered as a GitHub deploy key, not a personal-account key),
+  used to push to `master` from Martial's Claude Dispatch-triggered push
+  flow (Dispatch tasks run outside a normal git-configured dev machine, so
+  they need their own scoped push credential). Gitignored (`.gitignore`
+  excludes `.deploy-key*`), never committed. Unrelated to the GitHub
+  Actions self-hosted runner on the Pi, which only pulls — it doesn't need
+  push access at all.
 - **Local dev**: separate Drive *folder* for dev vs prod, same Google
   account/refresh token — two distinct real folder names
   (`wedding-planning-data-dev` / `wedding-planning-data`) selected via
