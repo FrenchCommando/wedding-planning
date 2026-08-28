@@ -172,9 +172,9 @@ sysadmin access to the Pi, not guest/vendor-facing app auth.
      that needs re-login prompts; re-issued on any active use.
   5. **Guest token generation**: an admin route (editor role required,
      `POST /api/admin/guest-token`), not just a script — mints a household
-     token into `guests-auth.json`. *(Admin UI page for this — table of
-     household/token/link/created-date plus a "generate new" form — is
-     not yet built; the route exists.)*
+     token into `guests-auth.json`. Admin UI at `public/admin.html`
+     (editor-gated via `/api/whoami`) — table of household/token/created/
+     link plus a "generate new" form, copy-to-clipboard on each link.
   6. **Guest token format**: human-readable, not a UUID/hex string — short
      Crockford-base32-style code (excludes ambiguous `0/O`, `1/I/l`), e.g.
      7 uppercase chars. Same reasoning as the wedsites `?token=` pattern:
