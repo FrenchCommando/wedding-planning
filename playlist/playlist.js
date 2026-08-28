@@ -737,6 +737,11 @@ document.getElementById("saveBtn").onclick=saveToServer;
 document.getElementById("helpBtn").onclick=helpDialog;
 window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue="";}});
 
+const appEl=document.getElementById("app");
+document.getElementById("sideToggle").addEventListener("click",()=>appEl.classList.toggle("side-open"));
+document.getElementById("sideBackdrop").addEventListener("click",()=>appEl.classList.remove("side-open"));
+window.addEventListener("keydown",e=>{if(e.key==="Escape")appEl.classList.remove("side-open");});
+
 async function init(){
   await loadSession();
   await loadData();

@@ -6,7 +6,8 @@
 <link rel="stylesheet" href="playlist.css">
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
+  <div class="side-backdrop" id="sideBackdrop"></div>
   <aside class="side">
     <header>
       <a href="/" style="font-size:11px;color:var(--muted)">&larr; Home</a>
@@ -26,6 +27,7 @@
 
   <main class="main">
     <div class="toolbar">
+      <button class="btn small" id="sideToggle" title="Show segments">☰ Segments</button>
       <div class="seg-ctl">
         <button class="btn small" id="viewSeg">Segment</button>
         <button class="btn small" id="viewTl">Timeline</button>
