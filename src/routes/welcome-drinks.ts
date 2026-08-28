@@ -4,6 +4,7 @@ import { requireRole } from "../auth/session.js";
 import { asyncRoute } from "../asyncHandler.js";
 import { mountRevisionRoutes } from "../revision-routes.js";
 import { welcomeDrinksDiffConfig } from "../welcome-drinks-diff-config.js";
+import { logRequest } from "../activity-log.js";
 
 const FILE_NAME = "welcome-drinks.json";
 
@@ -39,6 +40,7 @@ router.put("/welcome-drinks", requireRole("editor"), asyncRoute(async (req, res)
     res.status(409).json({ error: "conflict", currentRevisionId: result.currentRevisionId });
     return;
   }
+  logRequest(req, "save", "welcome-drinks");
   res.json({ revisionId: result.revisionId });
 }));
 

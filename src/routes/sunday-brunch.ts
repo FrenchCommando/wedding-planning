@@ -4,6 +4,7 @@ import { requireRole } from "../auth/session.js";
 import { asyncRoute } from "../asyncHandler.js";
 import { mountRevisionRoutes } from "../revision-routes.js";
 import { sundayBrunchDiffConfig } from "../sunday-brunch-diff-config.js";
+import { logRequest } from "../activity-log.js";
 
 const FILE_NAME = "sunday-brunch.json";
 
@@ -39,6 +40,7 @@ router.put("/sunday-brunch", requireRole("editor"), asyncRoute(async (req, res) 
     res.status(409).json({ error: "conflict", currentRevisionId: result.currentRevisionId });
     return;
   }
+  logRequest(req, "save", "sunday-brunch");
   res.json({ revisionId: result.revisionId });
 }));
 

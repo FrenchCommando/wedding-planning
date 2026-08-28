@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireRole } from "../auth/session.js";
 import { asyncRoute } from "../asyncHandler.js";
 import { createGuestToken, listGuestTokens } from "../auth/login.js";
+import { readActivity, logRequest } from "../activity-log.js";
 
 const router = Router();
 
@@ -20,7 +21,14 @@ router.post("/admin/guest-token", requireRole("editor"), asyncRoute(async (req, 
     return;
   }
   const token = await createGuestToken(household.trim());
+  logRequest(req, "mint-guest-link", "", household.trim());
   res.json({ household, token });
 }));
+
+// Editor-only: the activity log, newest first. Reads the plain local file on
+// the Pi (never Drive) — see src/activity-log.ts for why.
+router.get("/admin/activity", requireRole("editor"), (_req, res) => {
+  res.json({ entries: readActivity() });
+});
 
 export default router;

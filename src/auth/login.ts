@@ -3,6 +3,7 @@ import { Router } from "express";
 import { readJsonFile, writeJsonFile } from "../drive.js";
 import { issueSession } from "./session.js";
 import { asyncRoute } from "../asyncHandler.js";
+import { logActivity } from "../activity-log.js";
 
 export interface GuestAuthFile {
   households: { household: string; token: string; createdAt: string }[];
@@ -25,10 +26,12 @@ router.post("/login/editor", (req, res) => {
   const { password } = req.body ?? {};
   const expected = process.env.EDITOR_PASSWORD;
   if (!expected || typeof password !== "string" || !timingSafeEquals(password, expected)) {
+    logActivity("editor", "login-failed");
     res.status(401).json({ error: "invalid password" });
     return;
   }
   issueSession(res, { role: "editor" });
+  logActivity("editor", "login");
   res.json({ ok: true });
 });
 
@@ -36,10 +39,12 @@ router.post("/login/vendor", (req, res) => {
   const { password, vendorType } = req.body ?? {};
   const expected = process.env.VENDOR_PASSWORD;
   if (!expected || typeof password !== "string" || !timingSafeEquals(password, expected) || typeof vendorType !== "string") {
+    logActivity("vendor", "login-failed", "", typeof vendorType === "string" ? vendorType : "");
     res.status(401).json({ error: "invalid password" });
     return;
   }
   issueSession(res, { role: "vendor", vendorType });
+  logActivity(`vendor (${vendorType})`, "login");
   res.json({ ok: true });
 });
 
@@ -52,10 +57,15 @@ router.post("/login/guest", asyncRoute(async (req, res) => {
   const { data } = await readJsonFile<GuestAuthFile>("guests-auth.json", { households: [] });
   const match = data.households.find((h) => h.token === token.toUpperCase());
   if (!match) {
+    // The attempted code is deliberately not logged — it's someone's
+    // mistyped link, and a near-miss code in a log is a small needless leak.
+    logActivity("guest", "login-failed");
     res.status(401).json({ error: "invalid token" });
     return;
   }
   issueSession(res, { role: "guest", household: match.household });
+  // This is the entry that answers "did they ever actually open the link we sent?"
+  logActivity(`guest (${match.household})`, "login");
   res.json({ ok: true });
 }));
 

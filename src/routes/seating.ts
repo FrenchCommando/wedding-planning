@@ -5,6 +5,7 @@ import { diffData } from "../data-diff.js";
 import { seatingDiffConfig } from "../seating-diff-config.js";
 import { asyncRoute } from "../asyncHandler.js";
 import { mountRevisionRoutes } from "../revision-routes.js";
+import { logRequest } from "../activity-log.js";
 
 const FILE_NAME = "seating.json";
 
@@ -52,6 +53,10 @@ router.put("/seating", requireRole("editor"), asyncRoute(async (req, res) => {
     return;
   }
 
+  logRequest(req, "save", "seating", [
+    force ? "forced overwrite" : "",
+    keepForever ? "milestone" : "",
+  ].filter(Boolean).join(", "));
   res.json({ revisionId: result.revisionId });
 }));
 

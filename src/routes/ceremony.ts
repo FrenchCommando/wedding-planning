@@ -4,6 +4,7 @@ import { requireRole } from "../auth/session.js";
 import { asyncRoute } from "../asyncHandler.js";
 import { mountRevisionRoutes } from "../revision-routes.js";
 import { ceremonyDiffConfig } from "../ceremony-diff-config.js";
+import { logRequest } from "../activity-log.js";
 
 const FILE_NAME = "ceremony.json";
 
@@ -43,6 +44,7 @@ router.put("/ceremony", requireRole("editor"), asyncRoute(async (req, res) => {
     res.status(409).json({ error: "conflict", currentRevisionId: result.currentRevisionId });
     return;
   }
+  logRequest(req, "save", "ceremony");
   res.json({ revisionId: result.revisionId });
 }));
 
