@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music Plan</title>
+<link rel="stylesheet" href="playlist.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <header>
+      <a href="/" style="font-size:11px;color:var(--muted)">&larr; Home</a>
+      <h1>Music Plan</h1>
+      <div class="sub" id="subTitle"></div>
+    </header>
+    <div class="segs" id="segList"></div>
+    <div class="sidefoot">
+      <div class="totals">
+        <span>Segments <b id="tSegs">0</b></span>
+        <span>Tracks <b id="tTracks">0</b></span>
+        <span>Runtime <b id="tRun">0:00</b></span>
+      </div>
+      <button class="btn small" id="addSegBtn">+ Add segment</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="toolbar">
+      <div class="seg-ctl">
+        <button class="btn small" id="viewSeg">Segment</button>
+        <button class="btn small" id="viewTl">Timeline</button>
+      </div>
+      <span class="spacer"></span>
+      <span class="who"><span class="dot" id="spotDot"></span><span id="spotWho">Not connected</span></span>
+      <button class="btn small" id="connectBtn">Connect Spotify</button>
+      <button class="btn small" id="importBtn">Import playlist</button>
+      <button class="btn small" id="matchBtn">Match tracks</button>
+      <button class="btn small spot" id="syncBtn">Sync to Spotify</button>
+      <button class="btn small" id="exportBtn">Export text</button>
+      <button class="btn small" id="historyBtn">History</button>
+      <button class="btn small" id="saveBtn">Save</button>
+      <button class="btn small ghost" id="helpBtn">?</button>
+    </div>
+    <div class="pane" id="pane"></div>
+  </main>
+</div>
+
+<div class="overlay" id="modal" hidden><div class="modal" id="modalBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="playlist.js"></script>
+</body></html>
