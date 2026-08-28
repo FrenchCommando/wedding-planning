@@ -163,10 +163,16 @@ function renderLoggedIn(session) {
   const previewToggle = session.role === "editor"
     ? `<button class="secondary" id="previewToggle" style="margin-right:8px">${window.__previewAsVendor ? "Viewing as vendor" : "Preview as vendor"}</button>`
     : "";
-  // Not a sub-project (no household ever sees it), so it lives outside the
-  // main nav — a small editor-only link instead, next to the role tag.
+  // Not sub-projects (no household ever sees these), so they live outside
+  // the main nav — small editor-only links instead, next to the role tag.
+  const EDITOR_TOOLS = [
+    { href: "/admin.html", label: "Manage guest links" },
+    { href: "/activity.html", label: "Activity log" },
+  ];
   const adminLink = session.role === "editor"
-    ? `<a href="/admin.html" style="font-size:11px;color:var(--muted);margin-left:8px">Manage guest links</a>`
+    ? EDITOR_TOOLS.map(t =>
+        `<a href="${t.href}" style="font-size:11px;color:var(--muted);margin-left:8px">${t.label}</a>`
+      ).join("")
     : "";
 
   document.getElementById("app").innerHTML = `
