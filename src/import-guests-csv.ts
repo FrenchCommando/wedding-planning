@@ -70,7 +70,7 @@ const COLUMNS: Record<string, RegExp> = {
   rsvp: /^rsvp$/i,
   email: /^email$/i,
   phone: /^phone$/i,
-  welcomeDrinks: /welcome drinks/i,
+  welcomeDrinks: /friday welcome/i,
   shuttleToVenue: /shuttle to the venue/i,
   shuttleBack: /shuttle back/i,
   brunch: /brunch/i,
@@ -82,7 +82,7 @@ function main() {
     throw new Error(`missing ${csvPath} — drop a fresh guest-list export there (gitignored) or pass a path`);
   }
 
-  const rows = parseCSV(fs.readFileSync(csvPath, "utf8"));
+  const rows = parseCSV(fs.readFileSync(csvPath, "utf8").replace(/^﻿/, ""));
   if (!rows.length) throw new Error("CSV appears empty");
   const headers = rows[0];
   const dataRows = rows.slice(1).filter((r) => r.some((v) => v.trim() !== ""));
