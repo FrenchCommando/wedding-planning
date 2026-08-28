@@ -118,6 +118,7 @@ jobs:
           /ceremony/ceremony.html
           /welcome-drinks/welcome-drinks.html
           /sunday-brunch/sunday-brunch.html
+          /playlist/playlist.html
           "
 
           # Give the container a moment to bind its port before asserting.

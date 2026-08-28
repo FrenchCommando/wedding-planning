@@ -18,6 +18,7 @@ COPY seating-chart ./seating-chart
 COPY ceremony ./ceremony
 COPY welcome-drinks ./welcome-drinks
 COPY sunday-brunch ./sunday-brunch
+COPY playlist ./playlist
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
