@@ -195,6 +195,7 @@ function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">
 function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+", "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
 
 let data=null, revisionId=null, editing=false, session=null, activeTab="timeline";
+let speechesData=null, speechesRevisionId=null;
 
 async function loadSession(){
   const res=await api("/whoami");
@@ -214,7 +215,17 @@ async function loadCeremony(){
   data=body.data;
   revisionId=body.revisionId;
   if(data.recessionalOrder===undefined)data.recessionalOrder=deriveRecessionalFromProcessional();
-  if(data.speeches===undefined)data.speeches=[];
+}
+
+// Own Drive file (speeches.json), own router/history — split out of
+// ceremony.json so speeches track/diff independently of the ceremony
+// timeline data.
+async function loadSpeeches(){
+  const res=await api("/speeches");
+  if(!res.ok)throw new Error("failed to load speeches data");
+  const body=await res.json();
+  speechesData=body.data;
+  speechesRevisionId=body.revisionId;
 }
 
 // Moments titled "processional" or "recessional" (case-insensitive) get the
@@ -444,8 +455,8 @@ function render(){
 
 function renderSpeechesView(){
   const el=document.getElementById("speeches");
-  if(!data.speeches.length){el.innerHTML='<p style="text-align:center;color:var(--muted)">No speeches yet.</p>';return;}
-  el.innerHTML=data.speeches.map(s=>`
+  if(!speechesData.speeches.length){el.innerHTML='<p style="text-align:center;color:var(--muted)">No speeches yet.</p>';return;}
+  el.innerHTML=speechesData.speeches.map(s=>`
     <div class="speechRow">
       <h2>${esc(s.speaker)}</h2>
       ${s.relation?`<div class="relation">${esc(s.relation)}</div>`:""}
@@ -456,14 +467,14 @@ function renderSpeechesView(){
 
 function renderSpeechesEdit(){
   const el=document.getElementById("speeches");
-  el.innerHTML=data.speeches.map((s,i)=>`
+  el.innerHTML=speechesData.speeches.map((s,i)=>`
     <div class="speechEditRow" data-i="${i}">
       <input data-field="speaker" value="${esc(s.speaker)}" placeholder="Speaker">
       <input data-field="relation" value="${esc(s.relation||"")}" placeholder="Relation (e.g. Best Man)">
       <textarea data-field="notes" placeholder="Notes">${esc(s.notes||"")}</textarea>
       <div class="rowbar">
         <button class="secondary" data-action="up" ${i===0?"disabled":""}>↑</button>
-        <button class="secondary" data-action="down" ${i===data.speeches.length-1?"disabled":""}>↓</button>
+        <button class="secondary" data-action="down" ${i===speechesData.speeches.length-1?"disabled":""}>↓</button>
         <button class="danger" data-action="remove">Remove</button>
       </div>
     </div>
@@ -471,19 +482,19 @@ function renderSpeechesEdit(){
   el.querySelectorAll(".speechEditRow").forEach(row=>{
     const i=Number(row.dataset.i);
     row.querySelectorAll("[data-field]").forEach(inp=>{
-      inp.addEventListener("input",()=>{data.speeches[i][inp.dataset.field]=inp.value;});
+      inp.addEventListener("input",()=>{speechesData.speeches[i][inp.dataset.field]=inp.value;});
     });
     row.querySelector('[data-action="remove"]').addEventListener("click",()=>{
-      data.speeches.splice(i,1);renderSpeechesEdit();
+      speechesData.speeches.splice(i,1);renderSpeechesEdit();
     });
     row.querySelector('[data-action="up"]').addEventListener("click",()=>{
       if(i===0)return;
-      [data.speeches[i-1],data.speeches[i]]=[data.speeches[i],data.speeches[i-1]];
+      [speechesData.speeches[i-1],speechesData.speeches[i]]=[speechesData.speeches[i],speechesData.speeches[i-1]];
       renderSpeechesEdit();
     });
     row.querySelector('[data-action="down"]').addEventListener("click",()=>{
-      if(i===data.speeches.length-1)return;
-      [data.speeches[i+1],data.speeches[i]]=[data.speeches[i],data.speeches[i+1]];
+      if(i===speechesData.speeches.length-1)return;
+      [speechesData.speeches[i+1],speechesData.speeches[i]]=[speechesData.speeches[i],speechesData.speeches[i+1]];
       renderSpeechesEdit();
     });
   });
@@ -595,11 +606,17 @@ function observeMoments(){
   window.addEventListener("resize", layoutEndPadding);
 }
 
+// Ceremony (moments/processional/recessional) and speeches are two separate
+// Drive files/routes now — save() saves whichever tab is currently active,
+// against that tab's own endpoint/revisionId.
 async function save(){
-  const res=await api("/ceremony",{method:"PUT",body:JSON.stringify({data,revisionId})});
+  const isSpeeches=activeTab==="speeches";
+  const path=isSpeeches?"/speeches":"/ceremony";
+  const body=isSpeeches?{data:speechesData,revisionId:speechesRevisionId}:{data,revisionId};
+  const res=await api(path,{method:"PUT",body:JSON.stringify(body)});
   if(res.ok){
-    const body=await res.json();
-    revisionId=body.revisionId;
+    const resBody=await res.json();
+    if(isSpeeches)speechesRevisionId=resBody.revisionId;else revisionId=resBody.revisionId;
     editing=false;
     document.getElementById("editToggle").textContent="Edit";
     render();
@@ -607,7 +624,7 @@ async function save(){
   }
   if(res.status===409){
     alert("Someone else saved changes. Reloading the current version.");
-    await loadCeremony();
+    if(isSpeeches)await loadSpeeches();else await loadCeremony();
     editing=false;
     document.getElementById("editToggle").textContent="Edit";
     render();
@@ -621,7 +638,8 @@ async function openHistory(){
   overlay.hidden=false;
   const box=document.getElementById("historyList");
   box.innerHTML='<p class="hist-empty">Loading…</p>';
-  const res=await api("/ceremony/revisions");
+  const path=activeTab==="speeches"?"/speeches":"/ceremony";
+  const res=await api(`${path}/revisions`);
   if(!res.ok){box.innerHTML='<p class="hist-empty">Couldn\'t load history — try again.</p>';return;}
   const {revisions}=await res.json();
   if(!revisions.length){box.innerHTML='<p class="hist-empty">No past saves yet.</p>';return;}
@@ -635,7 +653,8 @@ async function openHistory(){
   }
 }
 async function compareRevision(id){
-  const res=await api(`/ceremony/revisions/${encodeURIComponent(id)}/diff`);
+  const path=activeTab==="speeches"?"/speeches":"/ceremony";
+  const res=await api(`${path}/revisions/${encodeURIComponent(id)}/diff`);
   if(!res.ok){
     const body=await res.json().catch(()=>null);
     alert(body&&body.error?body.error:"Couldn't load that comparison — try again.");
@@ -667,8 +686,8 @@ function setupControls(){
     renderEdit();
   });
   document.getElementById("addSpeech").addEventListener("click",()=>{
-    data.speeches.push({id:(data.nextId||1),speaker:"",relation:"",notes:""});
-    data.nextId=(data.nextId||1)+1;
+    speechesData.speeches.push({id:(speechesData.nextId||1),speaker:"",relation:"",notes:""});
+    speechesData.nextId=(speechesData.nextId||1)+1;
     renderSpeechesEdit();
   });
   document.getElementById("tabTimeline").addEventListener("click",()=>{
@@ -703,6 +722,7 @@ async function init(){
     await loadConfig();
     await loadSession();
     await loadCeremony();
+    await loadSpeeches();
   }catch(e){
     document.getElementById("err").textContent="Couldn't load ceremony data: "+(e&&e.message||e);
     return;

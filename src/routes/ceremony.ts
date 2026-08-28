@@ -18,11 +18,6 @@ const DEFAULT_STATE = {
   // processional behavior for data saved before this field existed.
   processionalOrder: [] as { id: number; name: string; role?: string; emoji?: string; startAt: number }[],
   recessionalOrder: [] as { id: number; name: string; role?: string; emoji?: string; startAt: number }[],
-  // Standalone list, not a moment — speeches don't have a fixed clock time
-  // in the same sense as a scroll-timeline moment (order matters, exact
-  // timing doesn't), so they get their own tab instead of being woven into
-  // the aisle-diagram timeline.
-  speeches: [] as { id: number; speaker: string; relation?: string; notes?: string }[],
   nextId: 1,
 };
 
