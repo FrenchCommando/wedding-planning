@@ -120,6 +120,22 @@
   .procEditRow .p-start{width:70px;}
   .procEditRow button{width:auto;padding:5px 9px;}
 
+  .tabs{max-width:640px;margin:0 auto 24px;display:flex;gap:8px;justify-content:center;}
+  .tabs button{background:transparent;color:var(--muted);border:1px solid var(--line);}
+  .tabs button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+
+  .speechRow{max-width:640px;margin:0 auto 18px;padding:0 0 18px;border-bottom:1px solid var(--line);}
+  .speechRow:last-child{border-bottom:0;}
+  .speechRow h2{font-size:16px;margin:0 0 2px;font-weight:600;}
+  .speechRow .relation{font-size:12px;color:var(--accent);margin-bottom:4px;}
+  .speechRow p{margin:0;color:var(--muted);font-size:14px;line-height:1.5;}
+
+  .speechEditRow{max-width:640px;margin:0 auto 12px;}
+  .speechEditRow input,.speechEditRow textarea{display:block;width:100%;margin-bottom:6px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font-size:14px;font-family:inherit;}
+  .speechEditRow textarea{resize:vertical;min-height:44px;}
+  .speechEditRow .rowbar{display:flex;gap:8px;margin-top:6px;}
+  .speechEditRow .rowbar button{width:auto;padding:5px 9px;}
+
   .addBar{max-width:640px;margin:20px auto;text-align:center;}
   #err{color:var(--danger);text-align:center;margin-bottom:20px;}
 
@@ -153,8 +169,14 @@
 <h1>Ceremony</h1>
 <div class="sub" id="subTitle"></div>
 <div id="err"></div>
+<div class="tabs">
+  <button id="tabTimeline" class="active">Timeline</button>
+  <button id="tabSpeeches">Speeches</button>
+</div>
 <div class="timeline" id="timeline"></div>
+<div id="speeches" style="display:none"></div>
 <div class="addBar" id="addBar" style="display:none"><button class="secondary" id="addMoment">+ Add moment</button></div>
+<div class="addBar" id="addSpeechBar" style="display:none"><button class="secondary" id="addSpeech">+ Add speech</button></div>
 
 <script>
 async function api(path,opts){
@@ -172,7 +194,7 @@ async function promptForLogin(){
 function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+", "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
 
-let data=null, revisionId=null, editing=false, session=null;
+let data=null, revisionId=null, editing=false, session=null, activeTab="timeline";
 
 async function loadSession(){
   const res=await api("/whoami");
@@ -192,6 +214,7 @@ async function loadCeremony(){
   data=body.data;
   revisionId=body.revisionId;
   if(data.recessionalOrder===undefined)data.recessionalOrder=deriveRecessionalFromProcessional();
+  if(data.speeches===undefined)data.speeches=[];
 }
 
 // Moments titled "processional" or "recessional" (case-insensitive) get the
@@ -403,6 +426,70 @@ function renderView(){
   observeMoments();
 }
 
+// Dispatches to the right render function for whichever tab is active,
+// in the right mode (view/edit) — the single entry point used by save(),
+// tab switching, and initial load, so those call sites don't each need to
+// know which tab is showing.
+function render(){
+  document.getElementById("timeline").style.display=activeTab==="timeline"?"block":"none";
+  document.getElementById("speeches").style.display=activeTab==="speeches"?"block":"none";
+  document.getElementById("addBar").style.display="none";
+  document.getElementById("addSpeechBar").style.display="none";
+  if(activeTab==="timeline"){
+    editing?renderEdit():renderView();
+  }else{
+    editing?renderSpeechesEdit():renderSpeechesView();
+  }
+}
+
+function renderSpeechesView(){
+  const el=document.getElementById("speeches");
+  if(!data.speeches.length){el.innerHTML='<p style="text-align:center;color:var(--muted)">No speeches yet.</p>';return;}
+  el.innerHTML=data.speeches.map(s=>`
+    <div class="speechRow">
+      <h2>${esc(s.speaker)}</h2>
+      ${s.relation?`<div class="relation">${esc(s.relation)}</div>`:""}
+      ${s.notes?`<p>${esc(s.notes)}</p>`:""}
+    </div>
+  `).join("");
+}
+
+function renderSpeechesEdit(){
+  const el=document.getElementById("speeches");
+  el.innerHTML=data.speeches.map((s,i)=>`
+    <div class="speechEditRow" data-i="${i}">
+      <input data-field="speaker" value="${esc(s.speaker)}" placeholder="Speaker">
+      <input data-field="relation" value="${esc(s.relation||"")}" placeholder="Relation (e.g. Best Man)">
+      <textarea data-field="notes" placeholder="Notes">${esc(s.notes||"")}</textarea>
+      <div class="rowbar">
+        <button class="secondary" data-action="up" ${i===0?"disabled":""}>↑</button>
+        <button class="secondary" data-action="down" ${i===data.speeches.length-1?"disabled":""}>↓</button>
+        <button class="danger" data-action="remove">Remove</button>
+      </div>
+    </div>
+  `).join("");
+  el.querySelectorAll(".speechEditRow").forEach(row=>{
+    const i=Number(row.dataset.i);
+    row.querySelectorAll("[data-field]").forEach(inp=>{
+      inp.addEventListener("input",()=>{data.speeches[i][inp.dataset.field]=inp.value;});
+    });
+    row.querySelector('[data-action="remove"]').addEventListener("click",()=>{
+      data.speeches.splice(i,1);renderSpeechesEdit();
+    });
+    row.querySelector('[data-action="up"]').addEventListener("click",()=>{
+      if(i===0)return;
+      [data.speeches[i-1],data.speeches[i]]=[data.speeches[i],data.speeches[i-1]];
+      renderSpeechesEdit();
+    });
+    row.querySelector('[data-action="down"]').addEventListener("click",()=>{
+      if(i===data.speeches.length-1)return;
+      [data.speeches[i+1],data.speeches[i]]=[data.speeches[i],data.speeches[i+1]];
+      renderSpeechesEdit();
+    });
+  });
+  document.getElementById("addSpeechBar").style.display="block";
+}
+
 function renderEdit(){
   const el=document.getElementById("timeline");
   el.innerHTML=data.moments.map((m,i)=>`
@@ -515,7 +602,7 @@ async function save(){
     revisionId=body.revisionId;
     editing=false;
     document.getElementById("editToggle").textContent="Edit";
-    renderView();
+    render();
     return;
   }
   if(res.status===409){
@@ -523,7 +610,7 @@ async function save(){
     await loadCeremony();
     editing=false;
     document.getElementById("editToggle").textContent="Edit";
-    renderView();
+    render();
     return;
   }
   alert("Save failed — check your connection and try again.");
@@ -569,7 +656,7 @@ function setupControls(){
     if(!editing){
       editing=true;
       document.getElementById("editToggle").textContent="Save";
-      renderEdit();
+      render();
     }else{
       await save();
     }
@@ -578,6 +665,23 @@ function setupControls(){
     data.moments.push({id:(data.nextId||1),time:"",title:"New moment",description:"",participants:""});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
+  });
+  document.getElementById("addSpeech").addEventListener("click",()=>{
+    data.speeches.push({id:(data.nextId||1),speaker:"",relation:"",notes:""});
+    data.nextId=(data.nextId||1)+1;
+    renderSpeechesEdit();
+  });
+  document.getElementById("tabTimeline").addEventListener("click",()=>{
+    activeTab="timeline";
+    document.getElementById("tabTimeline").classList.add("active");
+    document.getElementById("tabSpeeches").classList.remove("active");
+    render();
+  });
+  document.getElementById("tabSpeeches").addEventListener("click",()=>{
+    activeTab="speeches";
+    document.getElementById("tabSpeeches").classList.add("active");
+    document.getElementById("tabTimeline").classList.remove("active");
+    render();
   });
   document.getElementById("historyBtn").addEventListener("click",openHistory);
   const historyOverlay=document.getElementById("history");
@@ -604,7 +708,7 @@ async function init(){
     return;
   }
   setupControls();
-  renderView();
+  render();
 }
 init();
 </script>

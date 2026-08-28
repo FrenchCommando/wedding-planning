@@ -29,5 +29,13 @@ export const ceremonyDiffConfig: DiffConfig = {
         emoji: {},
       },
     },
+    speeches: {
+      label: (s) => s.speaker || "(unnamed speaker)",
+      fields: {
+        speaker: { message: (_after, before, after) => `Speech speaker renamed: ${before} → ${after}` },
+        relation: {},
+        notes: {},
+      },
+    },
   },
 };
