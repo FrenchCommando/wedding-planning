@@ -36,6 +36,7 @@ async function main() {
   await readJsonFile("welcome-drinks.json", { schedule: [], guests: [], nextId: 1 });
   await readJsonFile("sunday-brunch.json", { schedule: [], guests: [], nextId: 1 });
   await readJsonFile("speeches.json", { speeches: [], nextId: 1 });
+  await readJsonFile("script.json", { sections: [], nextId: 1 });
 
   console.log("Drive data folder and files ready.");
 }

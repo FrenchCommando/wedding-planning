@@ -10,6 +10,7 @@ import welcomeDrinksRouter from "./routes/welcome-drinks.js";
 import sundayBrunchRouter from "./routes/sunday-brunch.js";
 import playlistRouter from "./routes/playlist.js";
 import speechesRouter from "./routes/speeches.js";
+import scriptRouter from "./routes/script.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api", welcomeDrinksRouter);
 app.use("/api", sundayBrunchRouter);
 app.use("/api", playlistRouter);
 app.use("/api", speechesRouter);
+app.use("/api", scriptRouter);
 
 app.get("/api/whoami", (req, res) => {
   res.json({ session: req.session ?? null });

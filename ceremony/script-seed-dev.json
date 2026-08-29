@@ -1,0 +1,7 @@
+{
+  "sections": [
+    { "id": 1, "heading": "Welcome", "body": "Friends and family, thank you for being here today..." },
+    { "id": 2, "heading": "Vows", "body": "Do you take..." }
+  ],
+  "nextId": 3
+}

@@ -136,6 +136,18 @@
   .speechEditRow .rowbar{display:flex;gap:8px;margin-top:6px;}
   .speechEditRow .rowbar button{width:auto;padding:5px 9px;}
 
+  .scriptRow{max-width:640px;margin:0 auto 22px;padding:0 0 22px;border-bottom:1px solid var(--line);}
+  .scriptRow:last-child{border-bottom:0;}
+  .scriptRow h2{font-size:16px;margin:0 0 8px;font-weight:600;}
+  .scriptRow p{margin:0;color:var(--ink);font-size:14px;line-height:1.7;white-space:pre-wrap;}
+  .scriptRow p.empty{color:var(--muted);font-style:italic;}
+
+  .scriptEditRow{max-width:640px;margin:0 auto 14px;}
+  .scriptEditRow input{display:block;width:100%;margin-bottom:6px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font-size:14px;font-weight:600;font-family:inherit;}
+  .scriptEditRow textarea{display:block;width:100%;margin-bottom:6px;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:transparent;color:inherit;font-size:14px;line-height:1.6;font-family:inherit;resize:vertical;min-height:140px;}
+  .scriptEditRow .rowbar{display:flex;gap:8px;margin-top:6px;}
+  .scriptEditRow .rowbar button{width:auto;padding:5px 9px;}
+
   .addBar{max-width:640px;margin:20px auto;text-align:center;}
   #err{color:var(--danger);text-align:center;margin-bottom:20px;}
 
@@ -172,11 +184,14 @@
 <div class="tabs">
   <button id="tabTimeline" class="active">Timeline</button>
   <button id="tabSpeeches">Speeches</button>
+  <button id="tabScript">Script</button>
 </div>
 <div class="timeline" id="timeline"></div>
 <div id="speeches" style="display:none"></div>
+<div id="script" style="display:none"></div>
 <div class="addBar" id="addBar" style="display:none"><button class="secondary" id="addMoment">+ Add moment</button></div>
 <div class="addBar" id="addSpeechBar" style="display:none"><button class="secondary" id="addSpeech">+ Add speech</button></div>
+<div class="addBar" id="addScriptBar" style="display:none"><button class="secondary" id="addScriptSection">+ Add section</button></div>
 
 <script>
 async function api(path,opts){
@@ -196,6 +211,11 @@ function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toL
 
 let data=null, revisionId=null, editing=false, session=null, activeTab="timeline";
 let speechesData=null, speechesRevisionId=null;
+let scriptData=null, scriptRevisionId=null;
+
+// Central place mapping a tab name to its API path — every save/history
+// call site reads from here instead of repeating its own ternary chain.
+const TAB_PATHS={timeline:"/ceremony",speeches:"/speeches",script:"/script"};
 
 async function loadSession(){
   const res=await api("/whoami");
@@ -226,6 +246,17 @@ async function loadSpeeches(){
   const body=await res.json();
   speechesData=body.data;
   speechesRevisionId=body.revisionId;
+}
+
+// Own Drive file (script.json), own router/history — the officiant's actual
+// spoken script (long-form section text), split out for the same reason
+// speeches is: tracked/diffed/edited independently of the ceremony timeline.
+async function loadScript(){
+  const res=await api("/script");
+  if(!res.ok)throw new Error("failed to load script data");
+  const body=await res.json();
+  scriptData=body.data;
+  scriptRevisionId=body.revisionId;
 }
 
 // Moments titled "processional" or "recessional" (case-insensitive) get the
@@ -444,13 +475,63 @@ function renderView(){
 function render(){
   document.getElementById("timeline").style.display=activeTab==="timeline"?"block":"none";
   document.getElementById("speeches").style.display=activeTab==="speeches"?"block":"none";
+  document.getElementById("script").style.display=activeTab==="script"?"block":"none";
   document.getElementById("addBar").style.display="none";
   document.getElementById("addSpeechBar").style.display="none";
+  document.getElementById("addScriptBar").style.display="none";
   if(activeTab==="timeline"){
     editing?renderEdit():renderView();
-  }else{
+  }else if(activeTab==="speeches"){
     editing?renderSpeechesEdit():renderSpeechesView();
+  }else{
+    editing?renderScriptEdit():renderScriptView();
   }
+}
+
+function renderScriptView(){
+  const el=document.getElementById("script");
+  if(!scriptData.sections.length){el.innerHTML='<p style="text-align:center;color:var(--muted)">No script yet.</p>';return;}
+  el.innerHTML=scriptData.sections.map(s=>`
+    <div class="scriptRow">
+      <h2>${esc(s.heading)}</h2>
+      <p${s.body?"":' class="empty"'}>${esc(s.body)||"(no text yet)"}</p>
+    </div>
+  `).join("");
+}
+
+function renderScriptEdit(){
+  const el=document.getElementById("script");
+  el.innerHTML=scriptData.sections.map((s,i)=>`
+    <div class="scriptEditRow" data-i="${i}">
+      <input data-field="heading" value="${esc(s.heading)}" placeholder="Section heading">
+      <textarea data-field="body" placeholder="What's said in this section...">${esc(s.body||"")}</textarea>
+      <div class="rowbar">
+        <button class="secondary" data-action="up" ${i===0?"disabled":""}>↑</button>
+        <button class="secondary" data-action="down" ${i===scriptData.sections.length-1?"disabled":""}>↓</button>
+        <button class="danger" data-action="remove">Remove</button>
+      </div>
+    </div>
+  `).join("");
+  el.querySelectorAll(".scriptEditRow").forEach(row=>{
+    const i=Number(row.dataset.i);
+    row.querySelectorAll("[data-field]").forEach(inp=>{
+      inp.addEventListener("input",()=>{scriptData.sections[i][inp.dataset.field]=inp.value;});
+    });
+    row.querySelector('[data-action="remove"]').addEventListener("click",()=>{
+      scriptData.sections.splice(i,1);renderScriptEdit();
+    });
+    row.querySelector('[data-action="up"]').addEventListener("click",()=>{
+      if(i===0)return;
+      [scriptData.sections[i-1],scriptData.sections[i]]=[scriptData.sections[i],scriptData.sections[i-1]];
+      renderScriptEdit();
+    });
+    row.querySelector('[data-action="down"]').addEventListener("click",()=>{
+      if(i===scriptData.sections.length-1)return;
+      [scriptData.sections[i+1],scriptData.sections[i]]=[scriptData.sections[i],scriptData.sections[i+1]];
+      renderScriptEdit();
+    });
+  });
+  document.getElementById("addScriptBar").style.display="block";
 }
 
 function renderSpeechesView(){
@@ -610,13 +691,16 @@ function observeMoments(){
 // Drive files/routes now — save() saves whichever tab is currently active,
 // against that tab's own endpoint/revisionId.
 async function save(){
-  const isSpeeches=activeTab==="speeches";
-  const path=isSpeeches?"/speeches":"/ceremony";
-  const body=isSpeeches?{data:speechesData,revisionId:speechesRevisionId}:{data,revisionId};
+  const path=TAB_PATHS[activeTab];
+  const body=activeTab==="speeches"?{data:speechesData,revisionId:speechesRevisionId}
+    :activeTab==="script"?{data:scriptData,revisionId:scriptRevisionId}
+    :{data,revisionId};
   const res=await api(path,{method:"PUT",body:JSON.stringify(body)});
   if(res.ok){
     const resBody=await res.json();
-    if(isSpeeches)speechesRevisionId=resBody.revisionId;else revisionId=resBody.revisionId;
+    if(activeTab==="speeches")speechesRevisionId=resBody.revisionId;
+    else if(activeTab==="script")scriptRevisionId=resBody.revisionId;
+    else revisionId=resBody.revisionId;
     editing=false;
     document.getElementById("editToggle").textContent="Edit";
     render();
@@ -624,7 +708,9 @@ async function save(){
   }
   if(res.status===409){
     alert("Someone else saved changes. Reloading the current version.");
-    if(isSpeeches)await loadSpeeches();else await loadCeremony();
+    if(activeTab==="speeches")await loadSpeeches();
+    else if(activeTab==="script")await loadScript();
+    else await loadCeremony();
     editing=false;
     document.getElementById("editToggle").textContent="Edit";
     render();
@@ -638,7 +724,7 @@ async function openHistory(){
   overlay.hidden=false;
   const box=document.getElementById("historyList");
   box.innerHTML='<p class="hist-empty">Loading…</p>';
-  const path=activeTab==="speeches"?"/speeches":"/ceremony";
+  const path=TAB_PATHS[activeTab];
   const res=await api(`${path}/revisions`);
   if(!res.ok){box.innerHTML='<p class="hist-empty">Couldn\'t load history — try again.</p>';return;}
   const {revisions}=await res.json();
@@ -653,7 +739,7 @@ async function openHistory(){
   }
 }
 async function compareRevision(id){
-  const path=activeTab==="speeches"?"/speeches":"/ceremony";
+  const path=TAB_PATHS[activeTab];
   const res=await api(`${path}/revisions/${encodeURIComponent(id)}/diff`);
   if(!res.ok){
     const body=await res.json().catch(()=>null);
@@ -690,17 +776,18 @@ function setupControls(){
     speechesData.nextId=(speechesData.nextId||1)+1;
     renderSpeechesEdit();
   });
-  document.getElementById("tabTimeline").addEventListener("click",()=>{
-    activeTab="timeline";
-    document.getElementById("tabTimeline").classList.add("active");
-    document.getElementById("tabSpeeches").classList.remove("active");
-    render();
+  document.getElementById("addScriptSection").addEventListener("click",()=>{
+    scriptData.sections.push({id:(scriptData.nextId||1),heading:"New section",body:""});
+    scriptData.nextId=(scriptData.nextId||1)+1;
+    renderScriptEdit();
   });
-  document.getElementById("tabSpeeches").addEventListener("click",()=>{
-    activeTab="speeches";
-    document.getElementById("tabSpeeches").classList.add("active");
-    document.getElementById("tabTimeline").classList.remove("active");
-    render();
+  const tabButtons={timeline:document.getElementById("tabTimeline"),speeches:document.getElementById("tabSpeeches"),script:document.getElementById("tabScript")};
+  Object.entries(tabButtons).forEach(([tab,btn])=>{
+    btn.addEventListener("click",()=>{
+      activeTab=tab;
+      Object.entries(tabButtons).forEach(([t,b])=>b.classList.toggle("active",t===tab));
+      render();
+    });
   });
   document.getElementById("historyBtn").addEventListener("click",openHistory);
   const historyOverlay=document.getElementById("history");
@@ -723,6 +810,7 @@ async function init(){
     await loadSession();
     await loadCeremony();
     await loadSpeeches();
+    await loadScript();
   }catch(e){
     document.getElementById("err").textContent="Couldn't load ceremony data: "+(e&&e.message||e);
     return;

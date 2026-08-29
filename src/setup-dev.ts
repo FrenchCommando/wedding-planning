@@ -13,6 +13,7 @@ const FAKE_SEATING = JSON.parse(fs.readFileSync("./seating-chart/seating-seed-de
 const FAKE_WELCOME_DRINKS = JSON.parse(fs.readFileSync("./welcome-drinks/welcome-drinks-seed-dev.json", "utf8"));
 const FAKE_SUNDAY_BRUNCH = JSON.parse(fs.readFileSync("./sunday-brunch/sunday-brunch-seed-dev.json", "utf8"));
 const FAKE_SPEECHES = JSON.parse(fs.readFileSync("./ceremony/speeches-seed-dev.json", "utf8"));
+const FAKE_SCRIPT = JSON.parse(fs.readFileSync("./ceremony/script-seed-dev.json", "utf8"));
 
 async function main() {
   const folder = process.env.DRIVE_FOLDER_NAME ?? "";
@@ -29,6 +30,7 @@ async function main() {
   await seedJsonFile("welcome-drinks.json", FAKE_WELCOME_DRINKS);
   await seedJsonFile("sunday-brunch.json", FAKE_SUNDAY_BRUNCH);
   await seedJsonFile("speeches.json", FAKE_SPEECHES);
+  await seedJsonFile("script.json", FAKE_SCRIPT);
 
   console.log("Drive data folder ready. Login with EDITOR_PASSWORD / VENDOR_PASSWORD from .env.");
 }
