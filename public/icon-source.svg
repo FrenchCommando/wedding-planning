@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#3a2e28"/>
+  <text x="256" y="300" font-family="Georgia, 'Times New Roman', serif" fill="#f5e6c8" text-anchor="middle">
+    <tspan font-size="170">H</tspan><tspan font-size="110" dy="-6">&amp;</tspan><tspan font-size="170" dy="6">M</tspan>
+  </text>
+</svg>
