@@ -17,7 +17,7 @@ let state={rooms:[],tables:[],guests:[],partyColors:{},nextId:1};
 let venueName="";
 let baseData=null, baseRevisionId=null;
 let dirty=false;
-let selected=null, highlight=null, view="plan", swapFrom=null;
+let selected=null, highlight=null, view="table", swapFrom=null;
 
 function deepCopy(obj){return JSON.parse(JSON.stringify(obj));}
 function migrate(s){if(!s)return null;s.partyColors=s.partyColors||{};s.nextId=s.nextId||1;for(const t of s.tables){if(t.onPlan===undefined)t.onPlan=true;if(t.fx===undefined)t.fx=0.5;if(t.fy===undefined)t.fy=0.5;}return s;}
@@ -525,50 +525,48 @@ function renderTableView(){
     const h3=document.createElement("h3");
     h3.innerHTML=esc(room.name)+(room.note?` <span class="note">${esc(room.note)}</span>`:"");
     box.appendChild(h3);
-    const maxCap=Math.max(...tables.map(t=>t.seats.length));
-    const tbl=document.createElement("table");tbl.className="stable";
-    let head="<tr><th>Table</th>";
-    for(let i=0;i<maxCap;i++)head+=`<th>${i+1}</th>`;
-    head+="<th>Seated</th></tr>";
-    tbl.innerHTML="<thead>"+head+"</thead>";
-    const tb=document.createElement("tbody");
+    const cards=document.createElement("div");cards.className="tv-cards";
     for(const t of tables){
-      const tr=document.createElement("tr");
-      const nameTd=document.createElement("td");nameTd.className="tname";nameTd.textContent=t.name;
-      nameTd.draggable=true;nameTd.title="Drag onto another table's name to trade all guests";
-      nameTd.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","table:"+t.id);e.dataTransfer.effectAllowed="move";});
-      nameTd.addEventListener("dragover",e=>{e.preventDefault();nameTd.classList.add("dropcell");});
-      nameTd.addEventListener("dragleave",()=>nameTd.classList.remove("dropcell"));
-      nameTd.addEventListener("drop",e=>{e.preventDefault();nameTd.classList.remove("dropcell");
+      const tbl=document.createElement("table");tbl.className="stable tv-card";
+      const nameTh=document.createElement("th");nameTh.className="tname";nameTh.textContent=t.name;
+      nameTh.draggable=true;nameTh.title="Drag onto another table's name to trade all guests";
+      nameTh.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","table:"+t.id);e.dataTransfer.effectAllowed="move";});
+      nameTh.addEventListener("dragover",e=>{e.preventDefault();nameTh.classList.add("dropcell");});
+      nameTh.addEventListener("dragleave",()=>nameTh.classList.remove("dropcell"));
+      nameTh.addEventListener("drop",e=>{e.preventDefault();nameTh.classList.remove("dropcell");
         const d=e.dataTransfer.getData("text/plain");
         if(d.startsWith("table:"))swapTables(tableById(+d.slice(6)),t);});
-      tr.appendChild(nameTd);
-      for(let i=0;i<maxCap;i++){
+      const cnt=document.createElement("th");cnt.className="cnt";
+      cnt.textContent=t.seats.filter(Boolean).length+"/"+t.seats.length;
+      const htr=document.createElement("tr");htr.appendChild(nameTh);htr.appendChild(cnt);
+      const head=document.createElement("thead");head.appendChild(htr);tbl.appendChild(head);
+      const tb=document.createElement("tbody");
+      t.seats.forEach((gid,i)=>{
+        const tr=document.createElement("tr");
+        const num=document.createElement("td");num.className="snum";num.textContent=i+1;tr.appendChild(num);
         const td=document.createElement("td");
-        if(i<t.seats.length){
-          td.className="seatcell";td.dataset.t=t.id;td.dataset.i=i;
-          const gid=t.seats[i],g=gid?guestById(gid):null;
-          if(g){
-            const c=partyColor(g.party);
-            if(isPlaceholder(g))td.className+=" ph";
-            td.innerHTML=(g.unconfirmed
-              ?`<span class="pill-dot dot-unc" style="border-color:${c}"></span>`
-              :`<span class="pill-dot" style="background:${c}"></span>`)+esc(g.name);
-            td.title=(g.unconfirmed?"awaiting RSVP · ":"")+(g.party?g.party+" · ":"")+"click to unseat";
-            td.draggable=true;
-            td.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","seat:"+t.id+":"+i);e.dataTransfer.effectAllowed="move";});
-            td.addEventListener("click",()=>{t.seats[i]=null;save();renderAll();});
-          }else{td.className+=" empty";}
-          td.addEventListener("dragover",e=>{e.preventDefault();td.classList.add("dropcell");});
-          td.addEventListener("dragleave",()=>td.classList.remove("dropcell"));
-          td.addEventListener("drop",e=>{e.preventDefault();td.classList.remove("dropcell");handleDrop(e,t,i);});
-        }else{td.className="nocell";}
+        td.className="seatcell";td.dataset.t=t.id;td.dataset.i=i;
+        const g=gid?guestById(gid):null;
+        if(g){
+          const c=partyColor(g.party);
+          if(isPlaceholder(g))td.className+=" ph";
+          td.innerHTML=(g.unconfirmed
+            ?`<span class="pill-dot dot-unc" style="border-color:${c}"></span>`
+            :`<span class="pill-dot" style="background:${c}"></span>`)+esc(g.name);
+          td.title=(g.unconfirmed?"awaiting RSVP · ":"")+(g.party?g.party+" · ":"")+"click to unseat";
+          td.draggable=true;
+          td.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","seat:"+t.id+":"+i);e.dataTransfer.effectAllowed="move";});
+          td.addEventListener("click",()=>{t.seats[i]=null;save();renderAll();});
+        }else{td.className+=" empty";}
+        td.addEventListener("dragover",e=>{e.preventDefault();td.classList.add("dropcell");});
+        td.addEventListener("dragleave",()=>td.classList.remove("dropcell"));
+        td.addEventListener("drop",e=>{e.preventDefault();td.classList.remove("dropcell");handleDrop(e,t,i);});
         tr.appendChild(td);
-      }
-      const cnt=document.createElement("td");cnt.className="cnt";cnt.textContent=t.seats.filter(Boolean).length+"/"+t.seats.length;tr.appendChild(cnt);
-      tb.appendChild(tr);
+        tb.appendChild(tr);
+      });
+      tbl.appendChild(tb);cards.appendChild(tbl);
     }
-    tbl.appendChild(tb);box.appendChild(tbl);
+    box.appendChild(cards);
   }
 }
 
@@ -915,7 +913,7 @@ async function init(){
   }
   renderAll();
   fitToScreen();
-  setView("plan");
+  setView("table");
   updateSaveUI();
 }
 init();
