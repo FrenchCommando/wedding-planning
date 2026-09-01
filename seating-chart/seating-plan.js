@@ -528,7 +528,7 @@ function renderTableView(){
     const cards=document.createElement("div");cards.className="tv-cards";
     for(const t of tables){
       const tbl=document.createElement("table");tbl.className="stable tv-card";
-      const nameTh=document.createElement("th");nameTh.className="tname";nameTh.textContent=t.name;
+      const nameTh=document.createElement("th");nameTh.className="tname";nameTh.colSpan=2;nameTh.textContent=t.name;
       nameTh.draggable=true;nameTh.title="Drag onto another table's name to trade all guests";
       nameTh.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","table:"+t.id);e.dataTransfer.effectAllowed="move";});
       nameTh.addEventListener("dragover",e=>{e.preventDefault();nameTh.classList.add("dropcell");});
@@ -536,9 +536,10 @@ function renderTableView(){
       nameTh.addEventListener("drop",e=>{e.preventDefault();nameTh.classList.remove("dropcell");
         const d=e.dataTransfer.getData("text/plain");
         if(d.startsWith("table:"))swapTables(tableById(+d.slice(6)),t);});
-      const cnt=document.createElement("th");cnt.className="cnt";
+      const cnt=document.createElement("span");cnt.className="cnt";
       cnt.textContent=t.seats.filter(Boolean).length+"/"+t.seats.length;
-      const htr=document.createElement("tr");htr.appendChild(nameTh);htr.appendChild(cnt);
+      nameTh.appendChild(cnt);
+      const htr=document.createElement("tr");htr.appendChild(nameTh);
       const head=document.createElement("thead");head.appendChild(htr);tbl.appendChild(head);
       const tb=document.createElement("tbody");
       t.seats.forEach((gid,i)=>{
