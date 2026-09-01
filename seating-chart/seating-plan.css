@@ -123,8 +123,8 @@ input,button,select{font:inherit}
 .stable td.cnt{color:var(--muted);text-align:center}
 
 /* vertical per-table cards */
-.tv-cards{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start}
-.tv-card{margin-bottom:0}
+.tv-cards{display:flex;gap:12px;align-items:flex-start;overflow-x:auto;padding-bottom:8px}
+.tv-card{margin-bottom:0;flex:0 0 auto}
 .tv-card th{position:static}
 .tv-card th.tname{color:var(--ink);font-size:13px;font-weight:650;cursor:grab}
 .tv-card th.tname .cnt{float:right;color:var(--muted);font-weight:400;margin-left:12px}
