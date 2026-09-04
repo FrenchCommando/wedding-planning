@@ -50,8 +50,14 @@ function renderView(){
   }
 
   const guests=document.getElementById("guestBox");
-  document.getElementById("guestCount").textContent=`${data.guests.length} attending`;
-  if(!data.guests.length){guests.innerHTML='<p class="empty">No one on the list yet.</p>';}
+  document.getElementById("guestCount").textContent=`${headcount()} attending`;
+  const extra=Number(data.extraCount)||0;
+  const extraRow=extra?`
+      <div class="guestRow">
+        <span class="name">+${extra} more</span>
+        <span class="notes">${esc(data.extraCountNote||"headcount only, names not collected")}</span>
+      </div>`:"";
+  if(!data.guests.length&&!extra){guests.innerHTML='<p class="empty">No one on the list yet.</p>';}
   else{
     guests.innerHTML=data.guests.map(g=>`
       <div class="guestRow">
@@ -60,11 +66,16 @@ function renderView(){
         ${g.dietary?`<span class="dietary">${esc(g.dietary)}</span>`:""}
         ${g.notes?`<span class="notes">${esc(g.notes)}</span>`:""}
       </div>
-    `).join("");
+    `).join("")+extraRow;
   }
 
   document.getElementById("addBar").style.display="none";
 }
+
+// Some groups are tallied as a headcount only (no per-person names collected,
+// e.g. the Chinese side's own count). `extraCount` folds those into the total
+// so the displayed number matches the real headcount, not just the named rows.
+function headcount(){return data.guests.length+(Number(data.extraCount)||0);}
 
 function renderEdit(){
   const sched=document.getElementById("schedBox");
@@ -87,7 +98,7 @@ function renderEdit(){
   });
 
   const guests=document.getElementById("guestBox");
-  document.getElementById("guestCount").textContent=`${data.guests.length} attending`;
+  document.getElementById("guestCount").textContent=`${headcount()} attending`;
   guests.innerHTML=data.guests.map((g,i)=>`
     <div class="editRow" data-i="${i}">
       <input data-field="name" value="${esc(g.name)}" placeholder="Name">
@@ -106,6 +117,18 @@ function renderEdit(){
       data.guests.splice(i,1);renderEdit();
     });
   });
+
+  guests.insertAdjacentHTML("beforeend",`
+    <div class="editRow" id="extraRow">
+      <input id="extraCount" type="number" min="0" value="${Number(data.extraCount)||0}" placeholder="Extra headcount">
+      <input id="extraCountNote" value="${esc(data.extraCountNote||"")}" placeholder="What that count covers">
+    </div>
+  `);
+  document.getElementById("extraCount").addEventListener("input",e=>{
+    data.extraCount=Number(e.target.value)||0;
+    document.getElementById("guestCount").textContent=`${headcount()} attending`;
+  });
+  document.getElementById("extraCountNote").addEventListener("input",e=>{data.extraCountNote=e.target.value;});
 
   document.getElementById("addBar").style.display="flex";
 }

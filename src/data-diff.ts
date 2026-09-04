@@ -11,6 +11,8 @@
  * Field-level diffing is opt-in per collection (`fields`), not "diff every
  * field" — most fields (position, flags, etc.) aren't worth surfacing, so
  * silence is the default and each sub-project declares only what matters.
+ * The same opt-in rule applies to scalar fields at the data root, declared
+ * in the config's top-level `fields`.
  */
 
 export interface FieldConfig<T> {
@@ -33,8 +35,22 @@ export interface CollectionConfig<T = any> {
   slots?: SlotConfig<T>;
 }
 
+/**
+ * A scalar field living at the data root rather than inside a collection
+ * (e.g. welcome-drinks' `extraCount`). Opt-in the same way collection fields
+ * are — declared explicitly, silent otherwise.
+ */
+export interface RootFieldConfig {
+  /** Human name used in the default message; defaults to the key itself. */
+  label?: string;
+  /** Custom message; default: "<label>: <before> → <after>". */
+  message?(before: unknown, after: unknown): string;
+}
+
 export interface DiffConfig {
   collections: Record<string, CollectionConfig>;
+  /** Opt-in scalar fields at the data root, outside any collection. */
+  fields?: Record<string, RootFieldConfig>;
 }
 
 function byId(arr: any[] | undefined): Map<any, any> {
@@ -50,6 +66,17 @@ function fmt(v: unknown): string {
 
 export function diffData(baseline: any, current: any, config: DiffConfig): string[] {
   const changes: string[] = [];
+
+  for (const [key, field] of Object.entries(config.fields ?? {})) {
+    const before = baseline?.[key];
+    const after = current?.[key];
+    if (JSON.stringify(before) === JSON.stringify(after)) continue;
+    changes.push(
+      field.message
+        ? field.message(before, after)
+        : `${field.label ?? key}: ${fmt(before)} → ${fmt(after)}`
+    );
+  }
 
   for (const [key, col] of Object.entries(config.collections)) {
     const baseMap = byId(baseline?.[key]);

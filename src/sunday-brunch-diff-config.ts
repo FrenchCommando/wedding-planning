@@ -20,4 +20,11 @@ export const sundayBrunchDiffConfig: DiffConfig = {
       },
     },
   },
+  fields: {
+    extraCount: {
+      label: "Extra headcount",
+      message: (before, after) => `Extra headcount: ${before ?? 0} → ${after ?? 0}`,
+    },
+    extraCountNote: { label: "Extra-headcount note" },
+  },
 };
