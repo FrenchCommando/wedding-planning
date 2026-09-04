@@ -132,7 +132,13 @@ input,button,select{font:inherit}
 .tv-card th.dropcell{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent)}
 .tv-card td.snum{color:var(--muted);font-size:11px;text-align:right;width:1%;background:var(--th-bg)}
 .diet{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--danger);vertical-align:middle;cursor:help}
-.tv-card td.dietfoot{font-size:10px;color:var(--muted);line-height:1.5;padding:6px 8px;background:var(--th-bg);border-top:1px solid var(--line)}
+/* `.stable td` is nowrap so seat names stay on one line; the dietary footnote
+   is prose and must opt back out, or a long restriction stretches the whole
+   card. Capped width + hanging indent so wrapped lines sit under the note,
+   not under the name. */
+.tv-card td.dietfoot{font-size:10px;color:var(--muted);line-height:1.45;padding:7px 9px 8px;background:var(--th-bg);border-top:1px solid var(--line);white-space:normal}
+.tv-card td.dietfoot>div{max-width:230px;overflow-wrap:break-word;padding-left:9px;text-indent:-9px}
+.tv-card td.dietfoot>div+div{margin-top:5px}
 .tv-card td.dietfoot b{color:var(--ink);font-weight:600}
 
 .partiesview{flex:1;min-height:0;overflow:auto;padding:14px 20px 60px;background:var(--bg)}
@@ -248,6 +254,8 @@ input,button,select{font:inherit}
   #printRoot{-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#1a1a1a}
   @page{size:A4 portrait;margin:12mm}
   #printRoot .diet{display:inline-block;width:5px;height:5px;border-radius:50%;background:#b23a2e;vertical-align:middle}
-  #printRoot .pr-diet{margin-top:5px;padding-top:4px;border-top:1px solid #ddd;font-size:8.5px;line-height:1.45;color:#444}
+  #printRoot .pr-diet{margin-top:6px;padding-top:5px;border-top:1px solid #ddd;font-size:8.5px;line-height:1.4;color:#444}
+  #printRoot .pr-diet>div{overflow-wrap:break-word;padding-left:8px;text-indent:-8px}
+  #printRoot .pr-diet>div+div{margin-top:3px}
   #printRoot .pr-diet b{color:#1a1a1a;font-weight:600}
 }
