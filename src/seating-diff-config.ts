@@ -7,6 +7,7 @@ export const seatingDiffConfig: DiffConfig = {
       fields: {
         name: { message: (_after, before, after) => `Guest renamed: ${before} → ${after}` },
         party: {}, // default message: "<name>: party changed to <value>"
+        dietary: {},
         unconfirmed: {
           message: (after, _before, now) =>
             now ? `${after.name} marked awaiting RSVP` : `${after.name} marked confirmed`,

@@ -561,8 +561,9 @@ function renderTableView(){
           if(isPlaceholder(g))td.className+=" ph";
           td.innerHTML=(g.unconfirmed
             ?`<span class="pill-dot dot-unc" style="border-color:${c}"></span>`
-            :`<span class="pill-dot" style="background:${c}"></span>`)+esc(g.name);
-          td.title=(g.unconfirmed?"awaiting RSVP · ":"")+(g.party?g.party+" · ":"")+"click to unseat";
+            :`<span class="pill-dot" style="background:${c}"></span>`)+esc(g.name)
+            +(g.dietary?` <span class="diet" title="${esc(g.dietary)}">◆</span>`:"");
+          td.title=(g.unconfirmed?"awaiting RSVP · ":"")+(g.party?g.party+" · ":"")+(g.dietary?g.dietary+" · ":"")+"click to unseat";
           td.draggable=true;
           td.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","seat:"+t.id+":"+i);e.dataTransfer.effectAllowed="move";});
           td.addEventListener("click",()=>{t.seats[i]=null;save();renderAll();});
@@ -573,7 +574,19 @@ function renderTableView(){
         tr.appendChild(td);
         tb.appendChild(tr);
       });
-      tbl.appendChild(tb);cards.appendChild(tbl);
+      tbl.appendChild(tb);
+      // Dietary needs are free text and too long for a cell, so the cell only
+      // carries a ◆ marker and the full wording lands in a footnote under the
+      // table — the form the caterer actually works from.
+      const diets=t.seats.map(gid=>gid?guestById(gid):null).filter(g=>g&&g.dietary);
+      if(diets.length){
+        const tf=document.createElement("tfoot");
+        tf.innerHTML=`<tr><td class="dietfoot" colspan="2">`+
+          diets.map(g=>`<div><b>${esc(g.name)}</b> — ${esc(g.dietary)}</div>`).join("")+
+          `</td></tr>`;
+        tbl.appendChild(tf);
+      }
+      cards.appendChild(tbl);
     }
     box.appendChild(cards);
   }
@@ -658,10 +671,14 @@ function buildPrintRoot(){
       let li="";
       t.seats.forEach(gid=>{
         const g=gid?guestById(gid):null;
-        if(g)li+=`<li><span class="dot" style="background:${partyColor(g.party)}"></span>${esc(g.name)}${g.unconfirmed?' <span class="unc">(pending)</span>':""}</li>`;
+        if(g)li+=`<li><span class="dot" style="background:${partyColor(g.party)}"></span>${esc(g.name)}${g.dietary?' <span class="diet">◆</span>':""}${g.unconfirmed?' <span class="unc">(pending)</span>':""}</li>`;
         else li+=`<li class="empty">empty</li>`;
       });
-      card.innerHTML=`<h4>${esc(t.name)}<span class="c">${filled}/${t.seats.length}</span></h4><ol>${li}</ol>`;
+      const diets=t.seats.map(gid=>gid?guestById(gid):null).filter(g=>g&&g.dietary);
+      const foot=diets.length
+        ?`<div class="pr-diet">`+diets.map(g=>`<div><b>${esc(g.name)}</b> — ${esc(g.dietary)}</div>`).join("")+`</div>`
+        :"";
+      card.innerHTML=`<h4>${esc(t.name)}<span class="c">${filled}/${t.seats.length}</span></h4><ol>${li}</ol>${foot}`;
       grid.appendChild(card);
     }
     p2.appendChild(grid);
