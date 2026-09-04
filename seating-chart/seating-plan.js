@@ -41,6 +41,11 @@ function partyColor(p){if(!p)return"#9aa3ad";if(!state.partyColors[p]){const u=O
 
 /* ---------- Guests sidebar ---------- */
 function addGuest(name,party){name=name.trim();party=(party||"").trim();if(!name)return;state.guests.push({id:uid(),name,party});if(party)partyColor(party);save();renderGuests();renderStats();refreshParties();}
+function toggleConfirmed(id){
+  const g=state.guests.find(x=>x.id===id);if(!g)return;
+  if(g.unconfirmed)delete g.unconfirmed;else g.unconfirmed=true;
+  save();renderAll();
+}
 function removeGuest(id){const s=seatOf(id);if(s)s.table.seats[s.index]=null;state.guests=state.guests.filter(g=>g.id!==id);save();renderAll();}
 
 function renderGuests(){
@@ -66,13 +71,16 @@ function renderGuests(){
       const el=document.createElement("div");
       el.className="guest"+(s?" seated":"")+(highlight===g.id?" hl":"");
       el.draggable=true;el.dataset.id=g.id;
+      // The dot doubles as the RSVP toggle — hollow means awaiting, filled
+      // means confirmed. Only place in the UI that sets `unconfirmed`.
       const dotHtml=g.unconfirmed
-        ?`<span class="g-dot dot-unc" style="border-color:${col}" title="awaiting RSVP"></span>`
-        :`<span class="g-dot" style="background:${col}"></span>`;
+        ?`<span class="g-dot dot-unc" style="border-color:${col}" title="awaiting RSVP — click to mark confirmed"></span>`
+        :`<span class="g-dot" style="background:${col}" title="confirmed — click to mark awaiting RSVP"></span>`;
       el.innerHTML=dotHtml+`<span class="g-name">${esc(g.name)}</span>${s?`<span class="g-where">${esc(s.table.name)}</span>`:""}<span class="g-x" title="Remove">×</span>`;
       el.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","guest:"+g.id);e.dataTransfer.effectAllowed="move";el.classList.add("dragging");});
       el.addEventListener("dragend",()=>el.classList.remove("dragging"));
       el.addEventListener("click",e=>{if(e.target.classList.contains("g-x"))return;focusGuest(g.id);});
+      el.querySelector(".g-dot").addEventListener("click",ev=>{ev.stopPropagation();toggleConfirmed(g.id);});
       el.querySelector(".g-x").addEventListener("click",ev=>{ev.stopPropagation();removeGuest(g.id);});
       wrap.appendChild(el);
     }

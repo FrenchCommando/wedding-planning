@@ -53,7 +53,8 @@ input,button,select{font:inherit}
 .guest:hover{border-color:#cdd6e6}
 .guest.seated{opacity:.5}
 .guest.hl{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
-.guest .g-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.guest .g-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;cursor:pointer}
+.guest .g-dot:hover{outline:2px solid var(--accent);outline-offset:1px}
 .guest .g-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .guest .g-where{font-size:10px;color:var(--muted);flex:0 0 auto}
 .guest .g-x{opacity:0;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;padding:0 2px}
