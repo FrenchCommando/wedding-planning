@@ -562,7 +562,7 @@ function renderTableView(){
           td.innerHTML=(g.unconfirmed
             ?`<span class="pill-dot dot-unc" style="border-color:${c}"></span>`
             :`<span class="pill-dot" style="background:${c}"></span>`)+esc(g.name)
-            +(g.dietary?` <span class="diet" title="${esc(g.dietary)}">◆</span>`:"");
+            +(g.dietary?` <span class="diet" title="${esc(g.dietary)}"></span>`:"");
           td.title=(g.unconfirmed?"awaiting RSVP · ":"")+(g.party?g.party+" · ":"")+(g.dietary?g.dietary+" · ":"")+"click to unseat";
           td.draggable=true;
           td.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","seat:"+t.id+":"+i);e.dataTransfer.effectAllowed="move";});
@@ -576,7 +576,7 @@ function renderTableView(){
       });
       tbl.appendChild(tb);
       // Dietary needs are free text and too long for a cell, so the cell only
-      // carries a ◆ marker and the full wording lands in a footnote under the
+      // carries a small dot marker and the full wording lands in a footnote under the
       // table — the form the caterer actually works from.
       const diets=t.seats.map(gid=>gid?guestById(gid):null).filter(g=>g&&g.dietary);
       if(diets.length){
@@ -673,7 +673,7 @@ function buildPrintRoot(){
       let li="";
       t.seats.forEach(gid=>{
         const g=gid?guestById(gid):null;
-        if(g)li+=`<li><span class="dot" style="background:${partyColor(g.party)}"></span>${esc(g.name)}${g.dietary?' <span class="diet">◆</span>':""}${g.unconfirmed?' <span class="unc">(pending)</span>':""}</li>`;
+        if(g)li+=`<li><span class="dot" style="background:${partyColor(g.party)}"></span>${esc(g.name)}${g.dietary?' <span class="diet"></span>':""}${g.unconfirmed?' <span class="unc">(pending)</span>':""}</li>`;
         else li+=`<li class="empty">empty</li>`;
       });
       const diets=t.seats.map(gid=>gid?guestById(gid):null).filter(g=>g&&g.dietary);
