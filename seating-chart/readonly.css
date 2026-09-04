@@ -50,6 +50,7 @@ body{font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-seri
 .seat.occupied{background:var(--occupied);border-color:var(--occupied-line)}
 .seat.occupied[data-color]{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,var(--panel))}
 .seat.occupied.unconfirmed{border-style:dotted;border-width:2px}
+.seat.diet::after{content:"";position:absolute;top:1px;right:1px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:1.5px solid var(--panel);pointer-events:none}
 .seat.hl{box-shadow:0 0 0 3px var(--accent);z-index:4}.seat .s-num{color:#b3ada0;font-weight:600;font-size:10px}
 .tableview{flex:1;min-height:0;overflow:auto;padding:14px 20px 60px;background:var(--bg)}
 .tableview h3{font-size:14px;margin:20px 0 6px;font-weight:650}.tableview h3 .note{color:var(--muted);font-weight:400;font-size:12px;margin-left:8px}

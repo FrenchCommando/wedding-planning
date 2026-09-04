@@ -130,13 +130,13 @@ function buildTable(t,off){
   seatPositions(t).forEach((p,i)=>{
     const gid=t.seats[i],g=gid?guestById(gid):null;
     const seat=document.createElement("div");
-    seat.className="seat"+(g?" occupied":"")+(g&&g.unconfirmed?" unconfirmed":"")+(g&&isPlaceholder(g)?" placeholder":"")+(highlight&&highlight===gid?" hl":"");
+    seat.className="seat"+(g?" occupied":"")+(g&&g.unconfirmed?" unconfirmed":"")+(g&&isPlaceholder(g)?" placeholder":"")+(g&&g.dietary?" diet":"")+(highlight&&highlight===gid?" hl":"");
     seat.dataset.t=t.id;seat.dataset.i=i;
     seat.style.left=`calc(50% + ${p.x}px)`;seat.style.top=`calc(50% + ${p.y}px)`;
     if(g){
       const c=partyColor(g.party);seat.style.setProperty("--sc",c);if(g.party)seat.dataset.color="1";
       seat.innerHTML=`<span class="s-name">${esc(shortName(g.name))}</span>`;
-      seat.title=g.name+(g.party?` · ${g.party}`:"")+(g.unconfirmed?" · awaiting RSVP":"")+" — click to unseat";
+      seat.title=g.name+(g.party?` · ${g.party}`:"")+(g.unconfirmed?" · awaiting RSVP":"")+(g.dietary?` · ${g.dietary}`:"")+" — click to unseat";
       seat.draggable=true;
       seat.addEventListener("dragstart",e=>{e.stopPropagation();e.dataTransfer.setData("text/plain","seat:"+t.id+":"+i);e.dataTransfer.effectAllowed="move";});
     }else{seat.innerHTML=`<span class="s-num">${i+1}</span>`;seat.title="Empty seat";}
@@ -624,6 +624,7 @@ function planSVG(){
       const gid=t.seats[i],g=gid?guestById(gid):null,sx=cx+p.x,sy=cy+p.y;
       if(g){const c=partyColor(g.party);
         s+=`<circle cx="${sx}" cy="${sy}" r="20" fill="${c}" fill-opacity="0.16" stroke="${c}" stroke-width="${g.unconfirmed?2.5:2}"${g.unconfirmed?' stroke-dasharray="4 3"':""}/>`;
+        if(g.dietary)s+=`<circle cx="${sx+14}" cy="${sy-14}" r="4.5" fill="#b23a2e"/>`;
       }else{
         s+=`<circle cx="${sx}" cy="${sy}" r="20" fill="#f4f1ea" stroke="#c8c0b0" stroke-width="1.5"/>`;
         s+=`<text x="${sx}" y="${sy+5}" font-size="15" text-anchor="middle" fill="#b3ada0">${i+1}</text>`;
@@ -649,7 +650,8 @@ function buildPrintRoot(){
   p1.innerHTML=`<h1 class="pr-title">Seating Plan</h1>`+
     `<div class="pr-sub">${subline} · ${seated} guests seated across ${state.tables.length} tables</div>`;
   const legend=document.createElement("div");legend.className="pr-legend";
-  legend.innerHTML=partyList().map(p=>`<span><i style="background:${partyColor(p)}"></i>${esc(p)}</span>`).join("");
+  legend.innerHTML=partyList().map(p=>`<span><i style="background:${partyColor(p)}"></i>${esc(p)}</span>`).join("")
+    +(state.guests.some(g=>g.dietary)?`<span><i style="background:#b23a2e"></i>dietary need (see table lists)</span>`:"");
   p1.appendChild(legend);
   const box=document.createElement("div");box.className="pr-planbox";box.innerHTML=planSVG();
   p1.appendChild(box);
@@ -738,12 +740,12 @@ function readonlyViewer(){
     seatPositions(t).forEach((p,i)=>{
       const gid=t.seats[i],g=gid?guestById(gid):null;
       const seat=document.createElement("div");
-      seat.className="seat"+(g?" occupied":"")+(g&&g.unconfirmed?" unconfirmed":"")+(g&&isPlaceholder(g)?" placeholder":"")+(gid&&hl.has(gid)?" hl":"");
+      seat.className="seat"+(g?" occupied":"")+(g&&g.unconfirmed?" unconfirmed":"")+(g&&isPlaceholder(g)?" placeholder":"")+(g&&g.dietary?" diet":"")+(gid&&hl.has(gid)?" hl":"");
       seat.dataset.t=t.id;seat.dataset.i=i;
       seat.style.left=`calc(50% + ${p.x}px)`;seat.style.top=`calc(50% + ${p.y}px)`;
       if(g){const c=partyColor(g.party);seat.style.setProperty("--sc",c);if(g.party)seat.dataset.color="1";
         seat.innerHTML=`<span class="s-name">${esc(shortName(g.name))}</span>`;
-        seat.title=g.name+(g.party?` · ${g.party}`:"")+(g.unconfirmed?" · awaiting RSVP":"");
+        seat.title=g.name+(g.party?` · ${g.party}`:"")+(g.unconfirmed?" · awaiting RSVP":"")+(g.dietary?` · ${g.dietary}`:"");
       }else{seat.innerHTML=`<span class="s-num">${i+1}</span>`;}
       el.appendChild(seat);
     });

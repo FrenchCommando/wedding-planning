@@ -181,6 +181,7 @@ input,button,select{font:inherit}
 .seat.occupied{background:var(--occupied);border-color:var(--occupied-line)}
 .seat.occupied[data-color]{border-color:var(--sc);background:color-mix(in srgb,var(--sc) 14%,var(--panel))}
 .seat.occupied.unconfirmed{border-style:dotted;border-width:2px}
+.seat.diet::after{content:"";position:absolute;top:1px;right:1px;width:9px;height:9px;border-radius:50%;background:var(--danger);border:1.5px solid var(--panel);pointer-events:none}
 .dot-unc{background:transparent!important;border:2px dotted;box-sizing:border-box}
 .pchip.unc{border-style:dotted;border-color:#b3ab99}
 .seat.placeholder .s-name{font-weight:500;font-style:italic;color:var(--muted)}
