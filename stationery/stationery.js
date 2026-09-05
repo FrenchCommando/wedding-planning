@@ -99,7 +99,7 @@ const GENERATORS={
     const out=[];
     for(const t of s.tables){
       for(const e of collapseHousehold(seatedNames(s,t)))
-        out.push(e.name+(e.count>1?` (${e.count})`:""));
+        out.push(entryText(e));
     }
     return out.join("\n");
   },
@@ -113,7 +113,7 @@ const GENERATORS={
     if(!tables.length)return "";
     return r.name+"\n\n"+tables.map(t=>{
       const e=collapseHousehold(seatedNames(s,t));
-      return t.name+"\n"+e.map(x=>"  "+x.name+(x.count>1?` (${x.count})`:"")).join("\n");
+      return t.name+"\n"+e.map(x=>"  "+entryText(x)).join("\n");
     }).join("\n\n");
   }).filter(Boolean).join("\n\n"),
 };
@@ -139,8 +139,7 @@ function cjkSample(s){
   // interaction with the parenthetical, so a multi-member household wins.
   const pick=found.find(e=>e.count>1)||found[0];
   if(!pick)return null;
-  const n=pick.count>1?` (${pick.count})`:"";
-  return {chinese:pick.chinese+n, full:pick.full+n};
+  return {chinese:withCount(pick.chinese,pick.count), full:withCount(pick.full,pick.count)};
 }
 
 /* ---------- Mockups ----------
@@ -166,7 +165,7 @@ function mockTableNumber(t){
 }
 function mockPlanDeTable(s,t){
   const num=(t.name.match(/\d+/)||["5"])[0];
-  const names=collapseHousehold(seatedNames(s,t)).map(e=>esc(e.name)+(e.count>1?` (${e.count})`:"")).join("<br>");
+  const names=collapseHousehold(seatedNames(s,t)).map(e=>esc(entryText(e))).join("<br>");
   return `<div class="mocks">
     <div class="mk mk-paper mk-frame mk-tall"><div class="mk-seal"></div><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
   </div>`;
@@ -269,6 +268,19 @@ function countEntries(text){
   const indented=lines.filter(l=>l.startsWith("  "));
   return indented.length||lines.length;
 }
+/* The count goes before the pinyin, not after the whole name: on a place
+   card "任者友 (Ren Zheyou) (2)" wraps between the two parentheticals and
+   strands the number on its own line. "任者友 (2) (Ren Zheyou)" keeps the
+   number against the characters it belongs to, and any wrap falls in front
+   of the romanisation instead. Names with no parenthetical just take the
+   count at the end as before. */
+function withCount(name,count){
+  if(count<=1)return name;
+  const m=name.match(/^(.*?)(\s*\([^)]*\))\s*$/);
+  return m?`${m[1]} (${count})${m[2]}`:`${name} (${count})`;
+}
+function entryText(e){return withCount(e.name,e.count);}
+
 // An empty table gets no number card and no plan card — it exists on the
 // chart as a placeholder, and printing for it would order stationery for a
 // table nobody sits at. Table count on the piece follows from this, so a
@@ -510,7 +522,7 @@ function nameListHtml(seating){
       const entries=collapseHousehold(names);
       const total=entries.reduce((s,e)=>s+e.count,0);
       html+=`<div class="pr-card"><h4>${esc(t.name)}<span class="c">${total}</span></h4><ul>`+
-        entries.map(e=>`<li>${esc(e.name)}${e.count>1?` (${e.count})`:""}</li>`).join("")+
+        entries.map(e=>`<li>${esc(entryText(e))}</li>`).join("")+
         `</ul></div>`;
     }
     html+=`</div>`;
