@@ -82,7 +82,7 @@ const EXAMPLES={
   "table plan cards":"Hanna & Martial — please find your table\n\nOne column per table, names beneath.\nCopy: Stationery → Print name list.",
   // These two carry the copy already set in the designer's suite.
   "welcome panel":"WELCOME\nTO THE WEDDING\n\nof\n\nHANNA\nand\nMARTIAL\n\n17.10.2026\n\nwe're so glad you're here",
-  "guest book poster":"GUEST BOOK\n\nGrab a pen. Write a word.\nLeave some love.",
+  "guest book poster":"GUEST BOOK\n\nH&M\n17.10.2026",
 };
 let expanded=new Set();
 
@@ -161,34 +161,36 @@ function variantsHtml(s){
    it reaches the designer. Fixed cream/burgundy regardless of OS theme,
    since these stand in for paper. */
 const SUITE={date:"17.10.2026",couple:["HANNA","MARTIAL"]};
-function mockTableNumber(t,i){
+/* Each piece renders the variant that was actually chosen in the round of
+   feedback to the designer, not the options that were on the table — the
+   decision is made, and showing rejected variants alongside it would put
+   them back up for discussion every time the row is opened. The choice is
+   spelled out in each piece's own brief. */
+function mockTableNumber(t){
   const num=(t.name.match(/\d+/)||["5"])[0];
-  const variants=[
-    `<div class="mk mk-paper"><div class="mk-num">${esc(num)}</div><div class="mk-fine">HANNA &amp; MARTIAL<br>${SUITE.date}</div></div>`,
-    `<div class="mk mk-paper mk-frame"><div class="mk-num">${esc(num)}</div><div class="mk-fine mk-it">Table ${esc(num)}</div></div>`,
-    `<div class="mk mk-ink"><div class="mk-fine">TABLE</div><div class="mk-num">${esc(num.padStart(2,"0"))}</div></div>`,
-  ];
-  return `<div class="mocks">${variants.join("")}</div>`;
+  return `<div class="mocks">
+    <div class="mk mk-paper mk-frame"><div class="mk-num">${esc(num)}</div><div class="mk-fine mk-it">Table ${esc(num)}</div></div>
+  </div>`;
 }
 function mockPlanDeTable(s,t){
   const num=(t.name.match(/\d+/)||["5"])[0];
   const names=collapseHousehold(seatedNames(s,t)).map(e=>esc(e.name)+(e.count>1?` (${e.count})`:"")).join("<br>");
   return `<div class="mocks">
-    <div class="mk mk-paper mk-frame mk-tall"><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
-    <div class="mk mk-ink mk-tall"><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
+    <div class="mk mk-paper mk-frame mk-tall"><div class="mk-seal"></div><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
   </div>`;
 }
 function mockPlaceCard(name){
   return `<div class="mocks">
-    <div class="mk mk-paper mk-place"><span>${esc(name)}</span></div>
-    <div class="mk mk-ink mk-place"><span>${esc(name)}</span></div>
+    <div class="mk mk-paper mk-place"><span>${esc(name)}</span><i class="mk-seal"></i></div>
   </div>`;
 }
+// Two sides, per the feedback: English solid burgundy, French reversed.
 function mockMenu(text){
   const lines=(text||"").split("\n").filter(l=>l.trim()).slice(0,7).map(esc).join("<br>");
+  const body=lines||"— Entrée —<br>— Plat —<br>— Fromage —<br>— Dessert —";
   return `<div class="mocks">
-    <div class="mk mk-paper mk-arch"><div class="mk-names">${lines||"— Entrée —<br>— Plat —<br>— Fromage —<br>— Dessert —"}</div></div>
-    <div class="mk mk-ink mk-arch"><div class="mk-menu">MENU</div></div>
+    <div class="mk mk-ink mk-arch"><div class="mk-names">${body}</div><div class="mk-menu">MENU</div></div>
+    <div class="mk mk-paper mk-arch"><div class="mk-names">${body}</div><div class="mk-menu">MENU</div></div>
   </div>`;
 }
 function mockPoster(title,sub){
@@ -214,7 +216,7 @@ function mockFor(i,s){
   if(key==="welcome panel")return mockPoster("WELCOME TO THE WEDDING","17.10.2026 · we're so glad you're here");
   if(key==="guest book poster")return `<div class="mocks">
     <div class="mk mk-paper mk-poster"><div class="mk-couple">GUEST<br>BOOK</div>
-      <div class="mk-fine mk-it">Grab a pen. Write a word.<br>Leave some love.</div></div>
+      <div class="mk-fine">H&amp;M<br>${SUITE.date}</div></div>
   </div>`;
   return "";
 }
