@@ -79,11 +79,11 @@ function statusClass(s){
    piece name lowercased, so a renamed piece just loses its example, not its
    wording. Downloading gives the printer a plain .txt of one piece. */
 const EXAMPLES={
-  "place cards":"One name per card, as it should be written.\n\nGuest name only — no table number (the seating display carries that).\nHousehold entries show the count: 陈林湖 (Chen Linhu) (3)\n\nFull list: Stationery → Print name list.",
+  "place cards":"One name per card, as it should be written.\n\nGuest name only — no table number (the seating display carries that).\nHousehold entries show the count: 陈林湖 (3) Chen Linhu",
   "table numbers":"Front: the table name exactly as the seating chart writes it.\n  Table 1 … Table 20\n\nBack (optional): the salon name.\n  Salon Victoria · Salon Victor Hugo · Salon Josephine · Salon Debussy",
   "menus":"Hanna & Martial\n\n— Entrée —\n\n— Plat —\n\n— Fromage —\n\n— Dessert —\n\nDietary needs are per person; see the seating chart's print for who needs what at each table.",
   "ceremony programs":"Hanna & Martial\n\nThe order of the day, per the Ceremony page.\n\nProcessional\n…\n\nRecessional",
-  "table plan cards":"Hanna & Martial — please find your table\n\nOne column per table, names beneath.\nCopy: Stationery → Print name list.",
+  "table plan cards":"Hanna & Martial — please find your table\n\nOne card per table, names beneath the number.",
   // These two carry the copy already set in the designer's suite.
   "welcome panel":"WELCOME\nTO THE WEDDING\n\nof\n\nHANNA\nand\nMARTIAL\n\n17.10.2026\n\nwe're so glad you're here",
   "guest book poster":"GUEST BOOK\n\nH&M\n17.10.2026",
@@ -487,7 +487,7 @@ function setupControls(){
     data.nextId=(data.nextId||1)+1;
     renderEdit();
   });
-  document.getElementById("namesBtn").addEventListener("click",printNameList);
+  document.getElementById("namesBtn").addEventListener("click",downloadAll);
   document.getElementById("historyBtn").addEventListener("click",openHistory);
   const historyOverlay=document.getElementById("history");
   document.getElementById("historyClose").addEventListener("click",()=>{historyOverlay.hidden=true;});
@@ -527,41 +527,40 @@ function collapseHousehold(names){
   }
   return out;
 }
-function nameListHtml(seating){
-  const guestById=id=>seating.guests.find(g=>g.id===id);
-  let html="";
-  for(const room of seating.rooms){
-    const tables=usedTables(seating,room);          // an empty table needs no cards written
-    if(!tables.length)continue;
-    html+=`<div class="pr-h">${esc(room.name)}</div><div class="pr-tables">`;
-    for(const t of tables){
-      const names=t.seats.map(id=>id?guestById(id):null).filter(Boolean).map(g=>g.name);
-      const entries=collapseHousehold(names);
-      const total=entries.reduce((s,e)=>s+e.count,0);
-      html+=`<div class="pr-card"><h4>${esc(t.name)}<span class="c">${total}</span></h4><ul>`+
-        entries.map(e=>`<li>${esc(entryText(e))}</li>`).join("")+
-        `</ul></div>`;
-    }
-    html+=`</div>`;
-  }
-  return html;
-}
-async function printNameList(){
-  const res=await api("/seating");
-  if(!res.ok){alert("Couldn't load the seating chart to build the name list.");return;}
-  const {data:seating}=await res.json();
-  const root=document.getElementById("printRoot");
+/* ---------- Download all ----------
+   One plain-text file covering every piece: what it is, how many, who's
+   printing it, the brief, then the copy. That is the whole handover to the
+   stationer, so it replaces the old print-the-name-list button — the name
+   list is in here as the place cards and the table plan cards, and a file
+   can be sent, while a printout has to be carried. */
+function allPiecesText(){
   const venue=document.getElementById("subTitle").textContent;
-  const total=seating.guests.length;
-  root.innerHTML=`<div class="pr-page">
-      <h1 class="pr-title">Name list</h1>
-      <div class="pr-sub">${esc(venue)} · ${total} guests · for place cards</div>
-      ${nameListHtml(seating)}
-    </div>`;
-  document.body.classList.add("printing");
-  const done=()=>{document.body.classList.remove("printing");root.innerHTML="";window.removeEventListener("afterprint",done);};
-  window.addEventListener("afterprint",done);
-  setTimeout(()=>{window.print();},60);
+  const head=["Hanna & Martial — stationery",venue,new Date().toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})]
+    .filter(Boolean).join(" · ");
+  const blocks=(data.items||[]).map(i=>{
+    const meta=[i.quantity?`×${i.quantity}`:"",i.vendor,i.dueDate?`due ${fmtDue(i.dueDate)}`:"",i.status].filter(Boolean).join(" · ");
+    const derived=derivedText(i);
+    const parts=[i.name.toUpperCase(),meta];
+    if(i.notes)parts.push("",i.notes);
+    // A generated piece keeps `wording` as the brief, so both are worth
+    // carrying: the brief first, then the copy it describes.
+    if(derived!==null&&i.wording)parts.push("",i.wording);
+    const copy=printedText(i);
+    if(copy)parts.push("",derived!==null?"COPY (from the seating chart):":"COPY:","",copy);
+    return parts.join("\n");
+  });
+  return [head,"",...blocks.flatMap(b=>[b,"","—".repeat(40),""])].join("\n").trimEnd()+"\n";
+}
+async function downloadAll(){
+  // The generated pieces need the chart; it's normally already loaded
+  // because the rows open on load, but not if every piece is hand-written.
+  if((data.items||[]).some(generatorFor)&&!seating)await loadSeating();
+  const blob=new Blob([allPiecesText()],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="stationery.txt";
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
 }
 
 async function loadConfig(){

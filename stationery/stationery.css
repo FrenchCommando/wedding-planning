@@ -103,27 +103,3 @@ select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6
 .hist-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
 .hist-row:last-child{border-bottom:0;}
 .hist-when{flex:1;font-size:13px;}
-
-/* ---------- Print (name list) ----------
-   Same class names and page setup as the seating chart's print, minus the
-   floor plan, legend and dietary rules — this output is names only. Forced
-   light like the seating print: paper shouldn't follow OS dark mode. */
-#printRoot{display:none;}
-.pr-page{page-break-after:always;padding:0 0 8px;}
-.pr-page:last-child{page-break-after:auto;}
-.pr-title{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0;}
-.pr-sub{color:#555;font-size:13px;margin:2px 0 14px;}
-.pr-h{font-size:15px;font-weight:700;margin:14px 0 7px;border-bottom:1px solid #ccc;padding-bottom:3px;}
-.pr-tables{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
-.pr-card{border:1px solid #ccc;border-radius:8px;padding:8px 10px;break-inside:avoid;}
-.pr-card h4{margin:0 0 5px;font-size:13px;display:flex;justify-content:space-between;align-items:baseline;}
-.pr-card h4 .c{font-weight:400;color:#777;font-size:11px;}
-.pr-card ul{margin:0;padding:0;list-style:none;font-size:12px;line-height:1.5;}
-
-@media print{
-  .topbar,.wrap,h1,.sub,#err,.overlay{display:none!important;}
-  html,body{height:auto;overflow:visible;background:#fff;}
-  body.printing #printRoot{display:block;}
-  #printRoot{color:#1a1a1a;}
-  @page{size:A4 portrait;margin:12mm;}
-}
