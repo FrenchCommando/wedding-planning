@@ -104,12 +104,12 @@ const GENERATORS={
     return out.join("\n");
   },
   "table numbers":s=>s.rooms.map(r=>{
-    const tables=s.tables.filter(t=>t.roomId===r.id);
+    const tables=usedTables(s,r);
     if(!tables.length)return "";
     return r.name+"\n"+tables.map(t=>"  "+t.name).join("\n");
   }).filter(Boolean).join("\n\n"),
   "table plan cards":s=>s.rooms.map(r=>{
-    const tables=s.tables.filter(t=>t.roomId===r.id);
+    const tables=usedTables(s,r);
     if(!tables.length)return "";
     return r.name+"\n\n"+tables.map(t=>{
       const e=collapseHousehold(seatedNames(s,t));
@@ -142,14 +142,6 @@ function cjkSample(s){
   const n=pick.count>1?` (${pick.count})`:"";
   return {chinese:pick.chinese+n, full:pick.full+n};
 }
-function variantsHtml(s){
-  const v=cjkSample(s);
-  if(!v)return "";
-  return `<div class="variants">
-    <div><span class="vlabel">Chinese only</span><span>${esc(v.chinese)}</span></div>
-    <div><span class="vlabel">Chinese + pinyin</span><span>${esc(v.full)}</span></div>
-  </div>`;
-}
 
 /* ---------- Mockups ----------
    Rough shape-and-palette stand-ins for the designer's suite (Recreation),
@@ -179,9 +171,22 @@ function mockPlanDeTable(s,t){
     <div class="mk mk-paper mk-frame mk-tall"><div class="mk-seal"></div><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
   </div>`;
 }
-function mockPlaceCard(name){
-  return `<div class="mocks">
+function placeCard(name,caption){
+  return `<figure class="mkfig">
     <div class="mk mk-paper mk-place"><span>${esc(name)}</span><i class="mk-seal"></i></div>
+    ${caption?`<figcaption class="mk-cap">${esc(caption)}</figcaption>`:""}
+  </figure>`;
+}
+/* The Chinese name appears twice, with and without the pinyin, because
+   which one the calligrapher writes is still open — seeing both at card
+   size is the way to settle it, and a plain text comparison doesn't show
+   how long the pinyin line runs on a 4x8cm card. */
+function mockPlaceCard(s,name){
+  const v=cjkSample(s);
+  return `<div class="mocks">
+    ${placeCard(name)}
+    ${v?placeCard(v.chinese,"Chinese only"):""}
+    ${v?placeCard(v.full,"Chinese + pinyin"):""}
   </div>`;
 }
 // Two sides, per the feedback: English solid burgundy, French reversed.
@@ -209,7 +214,7 @@ function mockFor(i,s){
   if(key==="table plan cards"&&t)return mockPlanDeTable(s,t);
   if(key==="place cards"&&s){
     const first=collapseHousehold(seatedNames(s,t||s.tables[0]))[0];
-    return mockPlaceCard(first?first.name:"First name");
+    return mockPlaceCard(s,first?first.name:"First name");
   }
   if(key==="menus")return mockMenu(i.wording);
   if(key==="ceremony programs")return mockPoster("WELCOME · BIENVENUE");
@@ -233,13 +238,15 @@ function itemBody(i){
   const gen=generatorFor(i);
   const derived=derivedText(i);
   const wording=i.wording||"";
+  // The copy is the longest thing in the row — 128 names for the place
+  // cards — so it collapses too. Opening a piece shows the mockup and the
+  // brief; the full text is one more click, and its own open/closed state
+  // survives the row re-rendering.
   let main;
   if(gen&&!seating)main=`<p class="empty">Loading from the seating chart…</p>`;
-  else if(derived!==null)main=
-    `<div class="derived">From the seating chart · ${countEntries(derived)} entries</div>`+
-    ((i.name||"").trim().toLowerCase()==="place cards"?variantsHtml(seating):"")+
-    `<pre class="wording">${esc(derived)}</pre>`;
-  else if(wording)main=`<pre class="wording">${esc(wording)}</pre>`;
+  else if(derived!==null)main=copyBlock(i,
+    `From the seating chart · ${countEntries(derived)} entries`,derived);
+  else if(wording)main=copyBlock(i,`Wording · ${countEntries(wording)} lines`,wording);
   else main=`<p class="empty">No wording yet.${ex?" There's an example for this piece — Edit to use it.":""}</p>`;
   return `<div class="body">
     ${i.notes?`<div class="fullnote">${esc(i.notes)}</div>`:""}
@@ -249,12 +256,25 @@ function itemBody(i){
     ${printedText(i)?`<div class="bodybar"><button class="secondary" data-action="download">Download .txt</button></div>`:""}
   </div>`;
 }
+let copyOpen=new Set();
+function copyBlock(i,label,text){
+  return `<details class="copy" data-id="${i.id}"${copyOpen.has(i.id)?" open":""}>`+
+    `<summary>${esc(label)}</summary>`+
+    `<pre class="wording">${esc(text)}</pre></details>`;
+}
 // Indented lines are the names/tables; unindented ones are room headings.
 // A generator that indents nothing (place cards) counts every line.
 function countEntries(text){
   const lines=text.split("\n").filter(l=>l.trim());
   const indented=lines.filter(l=>l.startsWith("  "));
   return indented.length||lines.length;
+}
+// An empty table gets no number card and no plan card — it exists on the
+// chart as a placeholder, and printing for it would order stationery for a
+// table nobody sits at. Table count on the piece follows from this, so a
+// table emptied later drops out of the copy on the next open.
+function usedTables(s,room){
+  return s.tables.filter(t=>t.roomId===room.id&&(t.seats||[]).some(Boolean));
 }
 function seatedNames(s,t){
   return (t.seats||[]).map(id=>id?s.guests.find(g=>g.id===id):null).filter(Boolean).map(g=>g.name);
@@ -288,8 +308,12 @@ function renderView(){
       // The whole row toggles, not just its title — but not when the click
       // was on a control, and not when it ended a text selection (dragging
       // to copy the wording would otherwise collapse it mid-drag).
+      const det=el.querySelector("details.copy");
+      if(det)det.addEventListener("toggle",()=>{
+        if(det.open)copyOpen.add(id);else copyOpen.delete(id);
+      });
       el.addEventListener("click",async e=>{
-        if(e.target.closest("button,a,input,textarea"))return;
+        if(e.target.closest("button,a,input,textarea,summary,details"))return;
         if(String(window.getSelection()))return;
         if(expanded.has(id))expanded.delete(id);else expanded.add(id);
         renderView();
@@ -478,7 +502,7 @@ function nameListHtml(seating){
   const guestById=id=>seating.guests.find(g=>g.id===id);
   let html="";
   for(const room of seating.rooms){
-    const tables=seating.tables.filter(t=>t.roomId===room.id);
+    const tables=usedTables(seating,room);          // an empty table needs no cards written
     if(!tables.length)continue;
     html+=`<div class="pr-h">${esc(room.name)}</div><div class="pr-tables">`;
     for(const t of tables){
