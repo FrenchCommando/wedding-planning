@@ -1,0 +1,10 @@
+{
+  "sections": [
+    { "id": 1, "heading": "Welcome", "body": "" },
+    { "id": 2, "heading": "Readings", "body": "" },
+    { "id": 3, "heading": "Vows", "body": "" },
+    { "id": 4, "heading": "Ring exchange", "body": "" },
+    { "id": 5, "heading": "Pronouncement", "body": "" }
+  ],
+  "nextId": 6
+}

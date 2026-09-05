@@ -1,0 +1,32 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "Save the dates",
+      "status": "Sent",
+      "quantity": 90,
+      "vendor": "Printer name",
+      "dueDate": "2026-02-01",
+      "cost": 210,
+      "notes": "Free text"
+    },
+    {
+      "id": 2,
+      "name": "Invitations",
+      "status": "Proofing",
+      "quantity": 95,
+      "vendor": "Printer name",
+      "dueDate": "2026-06-15",
+      "cost": 640,
+      "notes": ""
+    },
+    {
+      "id": 3,
+      "name": "Menus",
+      "status": "To do",
+      "quantity": 175,
+      "dueDate": "2026-08-20"
+    }
+  ],
+  "nextId": 4
+}

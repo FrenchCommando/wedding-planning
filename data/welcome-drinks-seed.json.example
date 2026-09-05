@@ -1,0 +1,9 @@
+{
+  "schedule": [
+    { "id": 1, "time": "7:00 PM", "title": "Doors open", "description": "Bar and light bites available." }
+  ],
+  "guests": [
+    { "id": 2, "name": "Jane Doe", "household": "Doe Family", "dietary": "", "notes": "" }
+  ],
+  "nextId": 3
+}

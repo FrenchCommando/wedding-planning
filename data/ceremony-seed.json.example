@@ -1,0 +1,13 @@
+{
+  "moments": [
+    { "id": 1, "time": "3:30 PM", "title": "Guests arrive & seated", "description": "", "participants": "" },
+    { "id": 2, "time": "3:45 PM", "title": "Processional", "description": "Wedding party enters.", "participants": "Wedding party" }
+  ],
+  "processionalOrder": [
+    { "id": 9, "name": "Officiant", "role": "", "emoji": "🧑‍💼", "startAt": 0 }
+  ],
+  "recessionalOrder": [
+    { "id": 10, "name": "Officiant", "role": "", "emoji": "🧑‍💼", "startAt": 0 }
+  ],
+  "nextId": 11
+}

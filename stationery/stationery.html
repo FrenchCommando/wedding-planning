@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stationery</title>
+<link rel="stylesheet" href="stationery.css">
+</head>
+<body>
+<div class="topbar">
+  <a href="/">&larr; Home</a>
+  <span id="roleTag" style="font-size:12px;opacity:.6"></span>
+  <span id="editControls" style="display:none"><button class="secondary" id="editToggle">Edit</button></span>
+  <button class="secondary" id="historyBtn" style="display:none">History</button>
+</div>
+<h1>Stationery</h1>
+<div class="sub" id="subTitle"></div>
+<div id="err"></div>
+
+<div class="wrap">
+  <div class="section">
+    <div class="count" id="summary"></div>
+    <div id="itemBox"></div>
+  </div>
+  <div class="addBar" id="addBar" style="display:none;gap:10px">
+    <button class="secondary" id="addItem">+ Add piece</button>
+  </div>
+</div>
+
+<div class="overlay" id="history" hidden>
+  <div class="overlay-card">
+    <button class="overlay-close" id="historyClose" title="Close">×</button>
+    <h2>Past saves</h2>
+    <p class="lead">Each save keeps a Drive revision. Pick one to see what changed since then. Regular saves can age out of Drive's history over time.</p>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script src="stationery.js"></script>
+</body>
+</html>

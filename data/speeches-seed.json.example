@@ -1,0 +1,7 @@
+{
+  "speeches": [
+    { "id": 1, "speaker": "", "relation": "Mother of the Bride", "notes": "" },
+    { "id": 2, "speaker": "", "relation": "Father of the Groom", "notes": "" }
+  ],
+  "nextId": 3
+}

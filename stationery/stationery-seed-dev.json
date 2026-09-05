@@ -1,0 +1,10 @@
+{
+  "items": [
+    { "id": 1, "name": "Save the dates", "status": "Sent", "quantity": 90, "vendor": "Papier Test", "dueDate": "2026-02-01", "cost": 210, "notes": "Fake dev data" },
+    { "id": 2, "name": "Invitations", "status": "Proofing", "quantity": 95, "vendor": "Papier Test", "dueDate": "2026-06-15", "cost": 640, "notes": "Second proof pending" },
+    { "id": 3, "name": "Menus", "status": "To do", "quantity": 175, "vendor": "", "dueDate": "2026-08-20", "notes": "One per seat" },
+    { "id": 4, "name": "Place cards", "status": "Designing", "quantity": 175, "vendor": "", "dueDate": "2026-08-25", "notes": "Names come from the seating chart" },
+    { "id": 5, "name": "Welcome sign", "status": "Ordered", "quantity": 1, "vendor": "Signs Dev Co", "dueDate": "2026-08-10", "cost": 120, "notes": "" }
+  ],
+  "nextId": 6
+}

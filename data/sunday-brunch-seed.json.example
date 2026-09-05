@@ -1,0 +1,9 @@
+{
+  "schedule": [
+    { "id": 1, "time": "11:00 AM", "title": "Brunch service begins", "description": "" }
+  ],
+  "guests": [
+    { "id": 2, "name": "Jane Doe", "household": "Doe Family", "dietary": "", "notes": "" }
+  ],
+  "nextId": 3
+}

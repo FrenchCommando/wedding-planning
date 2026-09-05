@@ -3,5 +3,5 @@ dist/
 .env*
 !.env.example
 data/*
-!data/venue-seed.json.example
+!data/*-seed.json.example
 .deploy-key*
