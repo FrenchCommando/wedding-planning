@@ -26,6 +26,9 @@ const DEFAULT_STATE = {
     // The copy printed on the piece itself — long-form, edited behind a
     // click on the page rather than in the row.
     wording?: string;
+    // Keeps a piece on the page but out of the "Download all" handover —
+    // for something already settled with the designer.
+    noDownload?: boolean;
   }[],
   nextId: 1,
 };

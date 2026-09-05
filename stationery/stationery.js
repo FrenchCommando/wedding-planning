@@ -387,6 +387,7 @@ function renderEdit(){
       <input class="time-input" data-field="cost" type="number" min="0" step="0.01" value="${i.cost??""}" placeholder="Cost">
       <input data-field="notes" value="${esc(i.notes||"")}" placeholder="Notes">
       <button class="danger" data-action="remove">×</button>
+      <label class="dl-toggle"><input type="checkbox" data-field="noDownload"${i.noDownload?" checked":""}> leave out of Download all</label>
       <textarea class="wording-input" data-field="wording" placeholder="Wording — the copy printed on this piece">${esc(i.wording||"")}</textarea>
       ${EXAMPLES[(i.name||"").trim().toLowerCase()]&&!i.wording
         ?`<button class="secondary" data-action="example">Use example</button>`:""}
@@ -397,7 +398,10 @@ function renderEdit(){
     row.querySelectorAll("[data-field]").forEach(inp=>{
       const numeric=inp.type==="number";
       const apply=()=>{
-        data.items[idx][inp.dataset.field]=numeric?(inp.value===""?undefined:Number(inp.value)):inp.value;
+        data.items[idx][inp.dataset.field]=
+          inp.type==="checkbox"?(inp.checked||undefined)
+          :numeric?(inp.value===""?undefined:Number(inp.value))
+          :inp.value;
       };
       // `input` covers typing; `change` covers the select and the native
       // date picker, which don't fire `input` in every browser.
@@ -537,7 +541,11 @@ function allPiecesText(){
   const venue=document.getElementById("subTitle").textContent;
   const head=["Hanna & Martial — stationery",venue,new Date().toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})]
     .filter(Boolean).join(" · ");
-  const blocks=(data.items||[]).map(i=>{
+  // A piece can be left out of the handover without leaving the list —
+  // something already settled with the designer still belongs on the page
+  // (its quantity, its status, its brief) but adds nothing to the file
+  // being sent. Opt-out, so a new piece is included by default.
+  const blocks=(data.items||[]).filter(i=>!i.noDownload).map(i=>{
     const meta=[i.quantity?`×${i.quantity}`:"",i.vendor,i.dueDate?`due ${fmtDue(i.dueDate)}`:"",i.status].filter(Boolean).join(" · ");
     const derived=derivedText(i);
     const parts=[i.name.toUpperCase(),meta];

@@ -15,6 +15,10 @@ export const stationeryDiffConfig: DiffConfig = {
         // Long-form copy — diffed as "changed", not spelled out, since the
         // full before/after would drown every other line in the summary.
         wording: { message: (rec) => `${rec.name}: wording changed` },
+        noDownload: {
+          message: (rec, _before, after) =>
+            `${rec.name}: ${after ? "left out of" : "back in"} the Download all handover`,
+        },
       },
     },
   },
