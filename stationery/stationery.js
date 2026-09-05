@@ -204,6 +204,7 @@ function setupControls(){
     data.nextId=(data.nextId||1)+1;
     renderEdit();
   });
+  document.getElementById("namesBtn").addEventListener("click",printNameList);
   document.getElementById("historyBtn").addEventListener("click",openHistory);
   const historyOverlay=document.getElementById("history");
   document.getElementById("historyClose").addEventListener("click",()=>{historyOverlay.hidden=true;});
@@ -211,6 +212,73 @@ function setupControls(){
   window.addEventListener("keydown",e=>{if(e.key==="Escape")historyOverlay.hidden=true;});
   const roleTag=document.getElementById("roleTag");
   if(session)roleTag.textContent=session.role;
+}
+
+/* ---------- Name list (for ordering place cards) ----------
+   Reads the seating chart live and prints table-by-table name lists. This is
+   what the calligrapher/printer works from, so it carries names and nothing
+   else: no dietary markers, no pending-RSVP markers, no party colours, no
+   seat numbering beyond position in the table. Those all belong on the
+   seating chart's own print, which stays as it is.
+
+   Chinese entries are one household per line. The chart stores extra party
+   members as their own guest records suffixed `+1`, `+2` (`陈林湖 +1
+   (Chen Linhu +1)`) because each occupies a real seat; on a name list those
+   are one household, so they collapse to the base name with the household
+   headcount in parentheses — `陈林湖 (Chen Linhu) (3)` for a base plus +1 and
+   +2. The count is the total, not the number of extras. Collapsing keys on
+   the base name, so members split across tables collapse per table, not into
+   one line under whichever table came first. */
+function baseName(name){
+  // Strips a trailing " +N" from both the Chinese name and the pinyin
+  // parenthetical: "陈林湖 +1 (Chen Linhu +1)" → "陈林湖 (Chen Linhu)".
+  return name.replace(/\s*\+\d+\b/g, "").trim();
+}
+function collapseHousehold(names){
+  const out=[], seen=new Map();
+  for(const n of names){
+    const key=baseName(n);
+    if(seen.has(key)){out[seen.get(key)].count++;continue;}
+    seen.set(key,out.length);
+    out.push({name:key,count:1});
+  }
+  return out;
+}
+function nameListHtml(seating){
+  const guestById=id=>seating.guests.find(g=>g.id===id);
+  let html="";
+  for(const room of seating.rooms){
+    const tables=seating.tables.filter(t=>t.roomId===room.id);
+    if(!tables.length)continue;
+    html+=`<div class="pr-h">${esc(room.name)}</div><div class="pr-tables">`;
+    for(const t of tables){
+      const names=t.seats.map(id=>id?guestById(id):null).filter(Boolean).map(g=>g.name);
+      const entries=collapseHousehold(names);
+      const total=entries.reduce((s,e)=>s+e.count,0);
+      html+=`<div class="pr-card"><h4>${esc(t.name)}<span class="c">${total}</span></h4><ul>`+
+        entries.map(e=>`<li>${esc(e.name)}${e.count>1?` (${e.count})`:""}</li>`).join("")+
+        `</ul></div>`;
+    }
+    html+=`</div>`;
+  }
+  return html;
+}
+async function printNameList(){
+  const res=await api("/seating");
+  if(!res.ok){alert("Couldn't load the seating chart to build the name list.");return;}
+  const {data:seating}=await res.json();
+  const root=document.getElementById("printRoot");
+  const venue=document.getElementById("subTitle").textContent;
+  const total=seating.guests.length;
+  root.innerHTML=`<div class="pr-page">
+      <h1 class="pr-title">Name list</h1>
+      <div class="pr-sub">${esc(venue)} · ${total} guests · for place cards</div>
+      ${nameListHtml(seating)}
+    </div>`;
+  document.body.classList.add("printing");
+  const done=()=>{document.body.classList.remove("printing");root.innerHTML="";window.removeEventListener("afterprint",done);};
+  window.addEventListener("afterprint",done);
+  setTimeout(()=>{window.print();},60);
 }
 
 async function loadConfig(){
