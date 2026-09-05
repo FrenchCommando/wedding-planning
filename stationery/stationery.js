@@ -38,6 +38,10 @@ async function loadData(){
   const body=await res.json();
   data=body.data;
   revisionId=body.revisionId;
+  // Seven pieces, each a mockup and a brief — the whole page fits without
+  // hunting, so rows open by default and collapse is for getting one out
+  // of the way. The copy inside each stays collapsed; that's the long part.
+  expanded=new Set((data.items||[]).map(i=>i.id));
 }
 
 function money(n){
@@ -560,6 +564,12 @@ async function init(){
     await loadData();
     renderView();
     setupControls();
+    // Rows are open from the start, so the pieces whose copy comes from the
+    // seating chart need it now rather than on first expand.
+    if((data.items||[]).some(generatorFor)){
+      await loadSeating();
+      renderView();
+    }
   }catch(e){
     document.getElementById("err").textContent="Couldn't load: "+(e&&e.message||e);
   }
