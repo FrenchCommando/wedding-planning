@@ -279,9 +279,13 @@ function countEntries(text){
    of the romanisation instead. Names with no parenthetical just take the
    count at the end as before. */
 function withCount(name,count){
-  if(count<=1)return name;
-  const m=name.match(/^(.*?)(\s*\([^)]*\))\s*$/);
-  return m?`${m[1]} (${count})${m[2]}`:`${name} (${count})`;
+  const m=name.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
+  const n=count>1?` (${count})`:"";
+  // The brackets around the pinyin are the seating chart's own notation for
+  // "this is a reading aid". On a printed card there's nothing to bracket
+  // it off from, and they only add another wrap point in a line that
+  // already breaks badly — so the romanisation prints plain.
+  return m?`${m[1]}${n} ${m[2]}`:`${name}${n}`;
 }
 function entryText(e){return withCount(e.name,e.count);}
 
