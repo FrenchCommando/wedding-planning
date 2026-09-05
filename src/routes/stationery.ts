@@ -23,6 +23,9 @@ const DEFAULT_STATE = {
     dueDate?: string;
     cost?: number;
     notes?: string;
+    // The copy printed on the piece itself — long-form, edited behind a
+    // click on the page rather than in the row.
+    wording?: string;
   }[],
   nextId: 1,
 };

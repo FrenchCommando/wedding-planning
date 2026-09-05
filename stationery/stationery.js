@@ -14,8 +14,8 @@ function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">
 function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+", "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
 
 // Fixed pipeline, in order — a piece moves left to right. Kept as a closed
-// list rather than free text so the summary can count what's still open and
-// the status pill can style "done" without string-matching prose.
+// list rather than free text so the status pill can style "done" and the
+// overdue rule can tell in-flight from finished without matching prose.
 const STATUSES=["To do","Designing","Proofing","Ordered","Received","Sent"];
 const DONE_STATUSES=new Set(["Received","Sent"]);
 
@@ -63,17 +63,37 @@ function statusClass(s){
   return s&&s!=="To do"?"pill active":"pill";
 }
 
-function renderSummary(){
-  const items=data.items||[];
-  const done=items.filter(i=>DONE_STATUSES.has(i.status)).length;
-  const total=items.reduce((s,i)=>s+(Number(i.cost)||0),0);
-  const parts=[`${items.length} piece${items.length===1?"":"s"}`,`${done} done`];
-  if(total)parts.push(`${money(total)} total`);
-  document.getElementById("summary").textContent=parts.join(" · ");
+/* ---------- Wording ----------
+   A piece's `wording` is the copy that actually gets printed on it. It's
+   long-form free text, so it lives behind a click rather than in the row:
+   the collapsed row stays a one-line inventory, expanding shows the full
+   note and the wording. EXAMPLES are starting points, offered only when a
+   piece has no wording yet and never applied automatically — a real wedding's
+   copy is nothing a template should guess at, and silently filling the field
+   would make an example indistinguishable from a decision. Keyed on the
+   piece name lowercased, so a renamed piece just loses its example, not its
+   wording. Downloading gives the printer a plain .txt of one piece. */
+const EXAMPLES={
+  "place cards":"One name per card, as it should be written.\n\nGuest name only — no table number (the seating display carries that).\nHousehold entries show the count: 陈林湖 (Chen Linhu) (3)\n\nFull list: Stationery → Print name list.",
+  "table numbers":"Front: the table name exactly as the seating chart writes it.\n  Table 1 … Table 20\n\nBack (optional): the salon name.\n  Salon Victoria · Salon Victor Hugo · Salon Josephine · Salon Debussy",
+  "menus":"Hanna & Martial\n\n— Entrée —\n\n— Plat —\n\n— Fromage —\n\n— Dessert —\n\nDietary needs are per person; see the seating chart's print for who needs what at each table.",
+  "ceremony programs":"Hanna & Martial\n\nThe order of the day, per the Ceremony page.\n\nProcessional\n…\n\nRecessional",
+  "seating chart display":"Hanna & Martial — please find your table\n\nOne column per table, names beneath.\nCopy: Stationery → Print name list.",
+};
+let expanded=new Set();
+
+function itemBody(i){
+  const ex=EXAMPLES[(i.name||"").trim().toLowerCase()];
+  const wording=i.wording||"";
+  return `<div class="body">
+    ${i.notes?`<div class="fullnote">${esc(i.notes)}</div>`:""}
+    ${wording?`<pre class="wording">${esc(wording)}</pre>`
+             :`<p class="empty">No wording yet.${ex?" There's an example for this piece — Edit to use it.":""}</p>`}
+    ${wording?`<div class="bodybar"><button class="secondary" data-action="download">Download .txt</button></div>`:""}
+  </div>`;
 }
 
 function renderView(){
-  renderSummary();
   const box=document.getElementById("itemBox");
   const items=data.items||[];
   if(!items.length){box.innerHTML='<p class="empty">Nothing on the stationery list yet.</p>';}
@@ -84,22 +104,41 @@ function renderView(){
       if(i.vendor)meta.push(`<span>${esc(i.vendor)}</span>`);
       if(i.dueDate)meta.push(`<span class="due${isLate(i)?" late":""}">due ${esc(fmtDue(i.dueDate))}</span>`);
       if(Number(i.cost))meta.push(`<span>${esc(money(i.cost))}</span>`);
+      const open=expanded.has(i.id);
       return `
-      <div class="item">
+      <div class="item${open?" open":""}" data-id="${i.id}">
         <div class="head">
+          <span class="caret">${open?"▾":"▸"}</span>
           <span class="name">${esc(i.name)}</span>
           <span class="${statusClass(i.status)}">${esc(i.status||"To do")}</span>
         </div>
         ${meta.length?`<div class="meta">${meta.join("")}</div>`:""}
-        ${i.notes?`<div class="notes">${esc(i.notes)}</div>`:""}
+        ${open?itemBody(i):(i.notes?`<div class="notes">${esc(i.notes)}</div>`:"")}
       </div>`;
     }).join("");
+    box.querySelectorAll(".item").forEach(el=>{
+      const id=Number(el.dataset.id);
+      el.querySelector(".head").addEventListener("click",()=>{
+        if(expanded.has(id))expanded.delete(id);else expanded.add(id);
+        renderView();
+      });
+      const dl=el.querySelector('[data-action="download"]');
+      if(dl)dl.addEventListener("click",()=>downloadWording(items.find(i=>i.id===id)));
+    });
   }
   document.getElementById("addBar").style.display="none";
 }
 
+function downloadWording(item){
+  const blob=new Blob([item.wording||""],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=(item.name||"wording").replace(/[^\w一-鿿 -]+/g,"").trim().replace(/\s+/g,"-").toLowerCase()+".txt";
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
+}
+
 function renderEdit(){
-  renderSummary();
   const box=document.getElementById("itemBox");
   box.innerHTML=(data.items||[]).map((i,idx)=>`
     <div class="editRow" data-i="${idx}">
@@ -111,6 +150,9 @@ function renderEdit(){
       <input class="time-input" data-field="cost" type="number" min="0" step="0.01" value="${i.cost??""}" placeholder="Cost">
       <input data-field="notes" value="${esc(i.notes||"")}" placeholder="Notes">
       <button class="danger" data-action="remove">×</button>
+      <textarea class="wording-input" data-field="wording" placeholder="Wording — the copy printed on this piece">${esc(i.wording||"")}</textarea>
+      ${EXAMPLES[(i.name||"").trim().toLowerCase()]&&!i.wording
+        ?`<button class="secondary" data-action="example">Use example</button>`:""}
     </div>
   `).join("");
   box.querySelectorAll(".editRow").forEach(row=>{
@@ -119,7 +161,6 @@ function renderEdit(){
       const numeric=inp.type==="number";
       const apply=()=>{
         data.items[idx][inp.dataset.field]=numeric?(inp.value===""?undefined:Number(inp.value)):inp.value;
-        if(numeric)renderSummary();
       };
       // `input` covers typing; `change` covers the select and the native
       // date picker, which don't fire `input` in every browser.
@@ -128,6 +169,11 @@ function renderEdit(){
     });
     row.querySelector('[data-action="remove"]').addEventListener("click",()=>{
       data.items.splice(idx,1);renderEdit();
+    });
+    const exBtn=row.querySelector('[data-action="example"]');
+    if(exBtn)exBtn.addEventListener("click",()=>{
+      data.items[idx].wording=EXAMPLES[(data.items[idx].name||"").trim().toLowerCase()];
+      renderEdit();
     });
   });
   document.getElementById("addBar").style.display="flex";

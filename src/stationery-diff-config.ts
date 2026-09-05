@@ -12,6 +12,9 @@ export const stationeryDiffConfig: DiffConfig = {
         dueDate: {},
         cost: { message: (rec, before, after) => `${rec.name}: cost ${before ?? 0} → ${after ?? 0}` },
         notes: {},
+        // Long-form copy — diffed as "changed", not spelled out, since the
+        // full before/after would drown every other line in the summary.
+        wording: { message: (rec) => `${rec.name}: wording changed` },
       },
     },
   },
