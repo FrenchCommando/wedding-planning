@@ -1,13 +1,18 @@
 {
   "moments": [
     { "id": 1, "time": "3:30 PM", "title": "Guests arrive & seated", "description": "", "participants": "" },
-    { "id": 2, "time": "3:45 PM", "title": "Processional", "description": "Wedding party enters.", "participants": "Wedding party" }
+    { "id": 2, "time": "3:45 PM", "title": "Processional — wedding party", "description": "Wedding party enters.", "participants": "Wedding party" },
+    { "id": 3, "time": "3:50 PM", "title": "Processional — bride", "description": "Bride enters with her parents.", "participants": "Bride and parents" },
+    { "id": 4, "time": "4:20 PM", "title": "Recessional", "description": "Couple and wedding party exit.", "participants": "Wedding party" }
   ],
   "processionalOrder": [
-    { "id": 9, "name": "Officiant", "role": "", "emoji": "🧑‍💼", "startAt": 0 }
+    { "id": 9, "name": "Officiant", "role": "", "emoji": "📖", "startAt": 0, "momentId": 2 },
+    { "id": 10, "name": "Bridesmaid & Groomsman", "role": "", "emoji": "👫", "startAt": 8, "momentId": 2 },
+    { "id": 11, "name": "Bride, with her mom & dad", "role": "Bride, with parents", "emoji": "👨👰👩", "startAt": 20, "momentId": 3 }
   ],
   "recessionalOrder": [
-    { "id": 10, "name": "Officiant", "role": "", "emoji": "🧑‍💼", "startAt": 0 }
+    { "id": 12, "name": "The couple", "role": "", "emoji": "💑", "startAt": 0 },
+    { "id": 13, "name": "Bridesmaid & Groomsman", "role": "", "emoji": "👫", "startAt": 8 }
   ],
-  "nextId": 11
+  "nextId": 14
 }
