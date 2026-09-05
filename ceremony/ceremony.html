@@ -118,6 +118,10 @@
   .procEditRow .p-name{flex:2;}
   .procEditRow .p-role{flex:2;}
   .procEditRow .p-start{width:70px;}
+  /* Explicit background/colour, not transparent — an open native dropdown
+     is its own rendering surface and won't reliably honour transparent. */
+  .procEditRow .p-moment{width:96px;flex:none;padding:6px 8px;border:1px solid var(--line);border-radius:6px;
+    background:var(--panel);color:var(--ink);font-size:13px;font-family:inherit;}
   .procEditRow button{width:auto;padding:5px 9px;}
 
   .tabs{max-width:640px;margin:0 auto 24px;display:flex;gap:8px;justify-content:center;}
@@ -266,6 +270,29 @@ async function loadScript(){
 // this isn't derived, it's edited separately.
 function isProcessional(title){return /processional/i.test(title||"")&&!/recessional/i.test(title||"");}
 function isRecessional(title){return /recessional/i.test(title||"");}
+
+/* A processional can be several moments — Martial's entrance, the wedding
+   party, the bride — each its own beat on the timeline with its own music.
+   An entry may therefore name the moment it belongs to (`momentId`), and
+   that moment's diagram animates only those people. Entries without one
+   fall to the first matching moment, which is what data written before this
+   existed expects. `startAt` stays absolute across the whole processional
+   (the editor's real pacing, and what the seconds column means), so each
+   diagram rebases to its own earliest walker rather than opening with a
+   minute of empty aisle. */
+function momentsOfKind(kind){
+  return data.moments.filter(m=>kind==="p"?isProcessional(m.title):isRecessional(m.title));
+}
+function walkersFor(order,m,kind){
+  const all=order||[];
+  const assigned=all.filter(p=>p.momentId!=null);
+  const group=assigned.length
+    ? all.filter(p=>p.momentId===m.id)
+    : (momentsOfKind(kind)[0]||{}).id===m.id ? all : [];
+  if(!group.length)return group;
+  const base=Math.min(...group.map(p=>p.startAt||0));
+  return group.map(p=>({...p,startAt:(p.startAt||0)-base}));
+}
 function fmtOffset(sec){const m=Math.floor(sec/60),s=sec%60;return m?`${m}:${String(s).padStart(2,"0")}`:`0:${String(s).padStart(2,"0")}`;}
 
 // One-time migration for ceremony data saved before recessionalOrder
@@ -439,7 +466,11 @@ function renderView(){
   if(!data.moments.length){el.innerHTML='<p style="text-align:center;color:var(--muted)">No moments yet.</p>';}
   else{
     el.innerHTML=data.moments.map(m=>{
-      const hasAisle=isProcessional(m.title)||isRecessional(m.title);
+      const kind=isProcessional(m.title)?"p":isRecessional(m.title)?"r":null;
+      const walkers=kind?walkersFor(kind==="p"?data.processionalOrder:data.recessionalOrder,m,kind):[];
+      // A processional moment with nobody assigned to it is an ordinary
+      // moment — no diagram, no pin, no sticky header.
+      const hasAisle=walkers.length>0;
       // The rail header (time/dot/h2) is never moved or restyled — same
       // element, same position, always. For processional/recessional it
       // additionally gets position:sticky (see .rail-sticky) so it's the
@@ -454,7 +485,7 @@ function renderView(){
           ${m.description?`<p>${esc(m.description)}</p>`:""}
           ${m.participants?`<div class="participants">${esc(m.participants)}</div>`:""}
         </div>
-        ${isProcessional(m.title)?aisleHTML(data.processionalOrder,false):isRecessional(m.title)?aisleHTML(data.recessionalOrder,true):""}
+        ${hasAisle?aisleHTML(walkers,kind==="r"):""}
       </div>
     `;
     }).join("")+`
@@ -623,9 +654,19 @@ const ORDER_LISTS=[
 
 function orderEditHTML({key,idPrefix,heading}){
   const order=data[key]||[];
+  const kind=key==="processionalOrder"?"p":"r";
+  const targets=momentsOfKind(kind);
+  // Only worth choosing when the walk is split across more than one moment;
+  // with a single one the answer is never in doubt.
+  const momentCell=p=>targets.length<2?"":
+    `<select class="p-moment" data-field="momentId">`+
+    `<option value=""${p.momentId==null?" selected":""}>First</option>`+
+    targets.map(m=>`<option value="${m.id}"${p.momentId===m.id?" selected":""}>${esc(m.time||m.title)}</option>`).join("")+
+    `</select>`;
   const rows=order.map((p,i)=>`
     <div class="procEditRow" data-i="${i}">
       <input class="p-start" data-field="startAt" type="number" min="0" step="1" value="${p.startAt}" placeholder="Sec">
+      ${momentCell(p)}
       <input class="p-emoji" data-field="emoji" value="${esc(p.emoji||"")}" placeholder="🚶">
       <input class="p-name" data-field="name" value="${esc(p.name)}" placeholder="Name">
       <input class="p-role" data-field="role" value="${esc(p.role||"")}" placeholder="Role (optional)">
@@ -649,10 +690,15 @@ function wireOrderEdit(el,{key,idPrefix}){
   rowsEl.querySelectorAll(".procEditRow").forEach(row=>{
     const i=Number(row.dataset.i);
     row.querySelectorAll("[data-field]").forEach(inp=>{
-      inp.addEventListener("input",()=>{
-        const val=inp.dataset.field==="startAt"?Number(inp.value)||0:inp.value;
-        data[key][i][inp.dataset.field]=val;
-      });
+      const apply=()=>{
+        const f=inp.dataset.field;
+        const val=f==="startAt"?Number(inp.value)||0
+                 :f==="momentId"?(inp.value===""?undefined:Number(inp.value))
+                 :inp.value;
+        data[key][i][f]=val;
+      };
+      inp.addEventListener("input",apply);
+      inp.addEventListener("change",apply);   // the moment <select> fires only this
     });
     row.querySelector('[data-action="removeP"]').addEventListener("click",()=>{
       data[key].splice(i,1);renderEdit();
