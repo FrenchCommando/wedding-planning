@@ -58,9 +58,10 @@ function isLate(item){
   const d=new Date(item.dueDate+"T00:00:00");
   return !isNaN(d)&&d<new Date(new Date().toDateString());
 }
+// "To do" renders no pill at all — a piece nobody has started is the
+// default state, and badging every row with it says nothing.
 function statusClass(s){
-  if(DONE_STATUSES.has(s))return "pill done";
-  return s&&s!=="To do"?"pill active":"pill";
+  return DONE_STATUSES.has(s)?"pill done":"pill active";
 }
 
 /* ---------- Wording ----------
@@ -78,19 +79,183 @@ const EXAMPLES={
   "table numbers":"Front: the table name exactly as the seating chart writes it.\n  Table 1 … Table 20\n\nBack (optional): the salon name.\n  Salon Victoria · Salon Victor Hugo · Salon Josephine · Salon Debussy",
   "menus":"Hanna & Martial\n\n— Entrée —\n\n— Plat —\n\n— Fromage —\n\n— Dessert —\n\nDietary needs are per person; see the seating chart's print for who needs what at each table.",
   "ceremony programs":"Hanna & Martial\n\nThe order of the day, per the Ceremony page.\n\nProcessional\n…\n\nRecessional",
-  "seating chart display":"Hanna & Martial — please find your table\n\nOne column per table, names beneath.\nCopy: Stationery → Print name list.",
+  "table plan cards":"Hanna & Martial — please find your table\n\nOne column per table, names beneath.\nCopy: Stationery → Print name list.",
+  // These two carry the copy already set in the designer's suite.
+  "welcome panel":"WELCOME\nTO THE WEDDING\n\nof\n\nHANNA\nand\nMARTIAL\n\n17.10.2026\n\nwe're so glad you're here",
+  "guest book poster":"GUEST BOOK\n\nGrab a pen. Write a word.\nLeave some love.",
 };
 let expanded=new Set();
 
+/* ---------- Derived copy ----------
+   Three pieces don't have wording anyone writes — their content *is* the
+   seating chart, so they render it live instead of prose describing where
+   to find it. Typed copy would go stale the moment a guest moves tables.
+   The rest (menus, programs) stay hand-written, since nothing in the data
+   knows what's for dinner. `wording` still shows above a generated block
+   when set, for the instructions that aren't derivable ("ivory card stock,
+   3.5×2in") — the generated text is the copy, `wording` is the brief. */
+const GENERATORS={
+  "place cards":s=>{
+    const out=[];
+    for(const t of s.tables){
+      for(const e of collapseHousehold(seatedNames(s,t)))
+        out.push(e.name+(e.count>1?` (${e.count})`:""));
+    }
+    return out.join("\n");
+  },
+  "table numbers":s=>s.rooms.map(r=>{
+    const tables=s.tables.filter(t=>t.roomId===r.id);
+    if(!tables.length)return "";
+    return r.name+"\n"+tables.map(t=>"  "+t.name).join("\n");
+  }).filter(Boolean).join("\n\n"),
+  "table plan cards":s=>s.rooms.map(r=>{
+    const tables=s.tables.filter(t=>t.roomId===r.id);
+    if(!tables.length)return "";
+    return r.name+"\n\n"+tables.map(t=>{
+      const e=collapseHousehold(seatedNames(s,t));
+      return t.name+"\n"+e.map(x=>"  "+x.name+(x.count>1?` (${x.count})`:"")).join("\n");
+    }).join("\n\n");
+  }).filter(Boolean).join("\n\n"),
+};
+let seating=null;                                   // loaded on first expand of a generated piece
+
+/* The chart stores a Chinese guest as "陈林湖 (Chen Linhu)" — the pinyin is a
+   reading aid for whoever works the chart, not necessarily something you'd
+   letterpress. Which form the calligrapher writes is a decision, so the
+   place-cards row shows one real household both ways rather than picking
+   for you. Sampled from a household with a count, so the number's placement
+   is visible in both. */
+function cjkSample(s){
+  const found=[];
+  for(const t of s.tables){
+    for(const e of collapseHousehold(seatedNames(s,t))){
+      if(!/[一-鿿]/.test(e.name))continue;
+      const chinese=e.name.replace(/\s*\([^)]*\)\s*$/,"");
+      if(chinese===e.name)continue;                 // no pinyin parenthetical to strip
+      found.push({chinese,full:e.name,count:e.count});
+    }
+  }
+  // A sample with no +N shows neither the count's placement nor its
+  // interaction with the parenthetical, so a multi-member household wins.
+  const pick=found.find(e=>e.count>1)||found[0];
+  if(!pick)return null;
+  const n=pick.count>1?` (${pick.count})`:"";
+  return {chinese:pick.chinese+n, full:pick.full+n};
+}
+function variantsHtml(s){
+  const v=cjkSample(s);
+  if(!v)return "";
+  return `<div class="variants">
+    <div><span class="vlabel">Chinese only</span><span>${esc(v.chinese)}</span></div>
+    <div><span class="vlabel">Chinese + pinyin</span><span>${esc(v.full)}</span></div>
+  </div>`;
+}
+
+/* ---------- Mockups ----------
+   Rough shape-and-palette stand-ins for the designer's suite (Recreation),
+   drawn in CSS from the real data — a sense of "the table number card says
+   5 and Table cinq / five", not a rendering of the artwork. Deliberately
+   not a design: no typefaces from the suite, no wax seals, no florals,
+   no proportions anyone should measure. The point is to see your own names
+   and numbers in roughly the right piece, so the copy can be checked before
+   it reaches the designer. Fixed cream/burgundy regardless of OS theme,
+   since these stand in for paper. */
+const SUITE={date:"17.10.2026",couple:["HANNA","MARTIAL"]};
+function mockTableNumber(t,i){
+  const num=(t.name.match(/\d+/)||["5"])[0];
+  const variants=[
+    `<div class="mk mk-paper"><div class="mk-num">${esc(num)}</div><div class="mk-fine">HANNA &amp; MARTIAL<br>${SUITE.date}</div></div>`,
+    `<div class="mk mk-paper mk-frame"><div class="mk-num">${esc(num)}</div><div class="mk-fine mk-it">Table ${esc(num)}</div></div>`,
+    `<div class="mk mk-ink"><div class="mk-fine">TABLE</div><div class="mk-num">${esc(num.padStart(2,"0"))}</div></div>`,
+  ];
+  return `<div class="mocks">${variants.join("")}</div>`;
+}
+function mockPlanDeTable(s,t){
+  const num=(t.name.match(/\d+/)||["5"])[0];
+  const names=collapseHousehold(seatedNames(s,t)).map(e=>esc(e.name)+(e.count>1?` (${e.count})`:"")).join("<br>");
+  return `<div class="mocks">
+    <div class="mk mk-paper mk-frame mk-tall"><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
+    <div class="mk mk-ink mk-tall"><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
+  </div>`;
+}
+function mockPlaceCard(name){
+  return `<div class="mocks">
+    <div class="mk mk-paper mk-place"><span>${esc(name)}</span></div>
+    <div class="mk mk-ink mk-place"><span>${esc(name)}</span></div>
+  </div>`;
+}
+function mockMenu(text){
+  const lines=(text||"").split("\n").filter(l=>l.trim()).slice(0,7).map(esc).join("<br>");
+  return `<div class="mocks">
+    <div class="mk mk-paper mk-arch"><div class="mk-names">${lines||"— Entrée —<br>— Plat —<br>— Fromage —<br>— Dessert —"}</div></div>
+    <div class="mk mk-ink mk-arch"><div class="mk-menu">MENU</div></div>
+  </div>`;
+}
+function mockPoster(title,sub){
+  return `<div class="mocks">
+    <div class="mk mk-paper mk-poster">
+      <div class="mk-fine">${esc(title)}</div>
+      <div class="mk-couple">${SUITE.couple[0]}<br><i>and</i><br>${SUITE.couple[1]}</div>
+      <div class="mk-fine">${esc(sub||SUITE.date)}</div>
+    </div>
+  </div>`;
+}
+function mockFor(i,s){
+  const key=(i.name||"").trim().toLowerCase();
+  const t=s&&s.tables&&s.tables.find(t=>t.seats.some(Boolean));
+  if(key==="table numbers"&&t)return mockTableNumber(t);
+  if(key==="table plan cards"&&t)return mockPlanDeTable(s,t);
+  if(key==="place cards"&&s){
+    const first=collapseHousehold(seatedNames(s,t||s.tables[0]))[0];
+    return mockPlaceCard(first?first.name:"First name");
+  }
+  if(key==="menus")return mockMenu(i.wording);
+  if(key==="ceremony programs")return mockPoster("WELCOME · BIENVENUE");
+  if(key==="welcome panel")return mockPoster("WELCOME TO THE WEDDING","17.10.2026 · we're so glad you're here");
+  if(key==="guest book poster")return `<div class="mocks">
+    <div class="mk mk-paper mk-poster"><div class="mk-couple">GUEST<br>BOOK</div>
+      <div class="mk-fine mk-it">Grab a pen. Write a word.<br>Leave some love.</div></div>
+  </div>`;
+  return "";
+}
+
+function generatorFor(i){return GENERATORS[(i.name||"").trim().toLowerCase()];}
+function derivedText(i){
+  const gen=generatorFor(i);
+  return gen&&seating?gen(seating):null;
+}
+function printedText(i){return derivedText(i)??(i.wording||"");}
+
 function itemBody(i){
   const ex=EXAMPLES[(i.name||"").trim().toLowerCase()];
+  const gen=generatorFor(i);
+  const derived=derivedText(i);
   const wording=i.wording||"";
+  let main;
+  if(gen&&!seating)main=`<p class="empty">Loading from the seating chart…</p>`;
+  else if(derived!==null)main=
+    `<div class="derived">From the seating chart · ${countEntries(derived)} entries</div>`+
+    ((i.name||"").trim().toLowerCase()==="place cards"?variantsHtml(seating):"")+
+    `<pre class="wording">${esc(derived)}</pre>`;
+  else if(wording)main=`<pre class="wording">${esc(wording)}</pre>`;
+  else main=`<p class="empty">No wording yet.${ex?" There's an example for this piece — Edit to use it.":""}</p>`;
   return `<div class="body">
     ${i.notes?`<div class="fullnote">${esc(i.notes)}</div>`:""}
-    ${wording?`<pre class="wording">${esc(wording)}</pre>`
-             :`<p class="empty">No wording yet.${ex?" There's an example for this piece — Edit to use it.":""}</p>`}
-    ${wording?`<div class="bodybar"><button class="secondary" data-action="download">Download .txt</button></div>`:""}
+    ${mockFor(i,seating)}
+    ${derived!==null&&wording?`<pre class="wording brief">${esc(wording)}</pre>`:""}
+    ${main}
+    ${printedText(i)?`<div class="bodybar"><button class="secondary" data-action="download">Download .txt</button></div>`:""}
   </div>`;
+}
+// Indented lines are the names/tables; unindented ones are room headings.
+// A generator that indents nothing (place cards) counts every line.
+function countEntries(text){
+  const lines=text.split("\n").filter(l=>l.trim());
+  const indented=lines.filter(l=>l.startsWith("  "));
+  return indented.length||lines.length;
+}
+function seatedNames(s,t){
+  return (t.seats||[]).map(id=>id?s.guests.find(g=>g.id===id):null).filter(Boolean).map(g=>g.name);
 }
 
 function renderView(){
@@ -110,7 +275,7 @@ function renderView(){
         <div class="head">
           <span class="caret">${open?"▾":"▸"}</span>
           <span class="name">${esc(i.name)}</span>
-          <span class="${statusClass(i.status)}">${esc(i.status||"To do")}</span>
+          ${!i.status||i.status==="To do"?"":`<span class="${statusClass(i.status)}">${esc(i.status)}</span>`}
         </div>
         ${meta.length?`<div class="meta">${meta.join("")}</div>`:""}
         ${open?itemBody(i):(i.notes?`<div class="notes">${esc(i.notes)}</div>`:"")}
@@ -118,9 +283,21 @@ function renderView(){
     }).join("");
     box.querySelectorAll(".item").forEach(el=>{
       const id=Number(el.dataset.id);
-      el.querySelector(".head").addEventListener("click",()=>{
+      // The whole row toggles, not just its title — but not when the click
+      // was on a control, and not when it ended a text selection (dragging
+      // to copy the wording would otherwise collapse it mid-drag).
+      el.addEventListener("click",async e=>{
+        if(e.target.closest("button,a,input,textarea"))return;
+        if(String(window.getSelection()))return;
         if(expanded.has(id))expanded.delete(id);else expanded.add(id);
         renderView();
+        // Fetched once, on the first expand of a piece that needs it —
+        // the seating chart is a second file and most sessions never open
+        // one of these rows.
+        if(expanded.has(id)&&generatorFor(items.find(i=>i.id===id))&&!seating){
+          await loadSeating();
+          renderView();
+        }
       });
       const dl=el.querySelector('[data-action="download"]');
       if(dl)dl.addEventListener("click",()=>downloadWording(items.find(i=>i.id===id)));
@@ -129,8 +306,13 @@ function renderView(){
   document.getElementById("addBar").style.display="none";
 }
 
+async function loadSeating(){
+  const res=await api("/seating");
+  if(res.ok)seating=(await res.json()).data;
+}
+
 function downloadWording(item){
-  const blob=new Blob([item.wording||""],{type:"text/plain;charset=utf-8"});
+  const blob=new Blob([printedText(item)],{type:"text/plain;charset=utf-8"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
   a.download=(item.name||"wording").replace(/[^\w一-鿿 -]+/g,"").trim().replace(/\s+/g,"-").toLowerCase()+".txt";

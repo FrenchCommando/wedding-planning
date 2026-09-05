@@ -33,13 +33,40 @@ input,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-
 .item .meta{color:var(--muted);font-size:12px;display:flex;gap:12px;flex-wrap:wrap;margin-top:3px;}
 .item .notes{color:var(--muted);font-size:12px;font-style:italic;margin-top:3px;}
 .item .due.late{color:var(--danger);font-weight:600;}
-.item .head{cursor:pointer;}
+.item{cursor:pointer;}
 .item .caret{color:var(--muted);font-size:11px;width:10px;flex:none;}
-.item .body{margin-top:8px;}
+.item .body{margin-top:6px;}
 .item .fullnote{color:var(--muted);font-size:12px;font-style:italic;margin-bottom:8px;}
-.item .wording{margin:0;padding:10px 12px;background:var(--chip-bg,rgba(127,127,127,.08));border:1px solid var(--line);border-radius:8px;
-  font:inherit;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:break-word;}
-.item .bodybar{margin-top:8px;}
+.item .wording{margin:0;font:inherit;line-height:1.6;white-space:pre-wrap;overflow-wrap:break-word;}
+.item .wording.brief{color:var(--muted);margin-bottom:10px;}
+.item .derived{color:var(--muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+/* Rough stand-ins for the designer's suite — palette and proportions only,
+   fixed cream/burgundy in both themes because they represent paper. */
+.mocks{--paper:#f2e7dc;--ink:#7a1f2b;--rule:#c9a9a2;
+  display:flex;flex-wrap:wrap;gap:12px;margin:0 0 14px;align-items:flex-start;}
+.mk{width:104px;min-height:132px;padding:10px 8px;border-radius:2px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;text-align:center;
+  background:var(--paper);color:var(--ink);font-family:Georgia,"Iowan Old Style",serif;overflow:hidden;}
+.mk-ink{background:var(--ink);color:var(--paper);}
+.mk-frame{box-shadow:inset 0 0 0 1px var(--ink),inset 0 0 0 5px var(--paper);}
+.mk-ink.mk-tall{box-shadow:inset 0 0 0 1px var(--paper),inset 0 0 0 5px var(--ink);}
+.mk-num{font-size:34px;line-height:1;font-weight:400;}
+.mk-fine{font-size:7px;letter-spacing:.12em;line-height:1.5;}
+.mk-it{font-style:italic;letter-spacing:0;font-size:8px;}
+.mk-names{font-size:5.5px;line-height:1.65;letter-spacing:.04em;}
+.mk-tall{min-height:168px;justify-content:flex-start;padding-top:14px;}
+.mk-tall .mk-num{font-size:26px;margin-bottom:4px;}
+.mk-place{width:132px;min-height:56px;box-shadow:inset 0 0 0 1px currentColor;font-size:10px;letter-spacing:.1em;}
+.mk-arch{border-radius:52px 52px 2px 2px;min-height:156px;justify-content:flex-start;padding-top:26px;}
+.mk-menu{font-size:19px;letter-spacing:.06em;margin-top:auto;}
+.mk-poster{width:118px;min-height:158px;justify-content:space-between;padding:14px 10px;}
+.mk-couple{font-size:14px;line-height:1.35;letter-spacing:.06em;}
+.mk-couple i{font-size:8px;letter-spacing:0;}
+
+.item .variants{display:flex;flex-wrap:wrap;gap:8px 28px;margin:0 0 12px;}
+.item .variants>div{display:flex;flex-direction:column;gap:2px;}
+.item .vlabel{color:var(--muted);font-size:11px;}
+.item .bodybar{margin-top:10px;}
 .wording-input{flex:1 0 100%;min-height:90px;resize:vertical;font-size:12.5px;line-height:1.55;}
 .pill{font-size:11px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
 .pill.done{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
