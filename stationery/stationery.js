@@ -143,7 +143,9 @@ function cjkSample(s){
   // interaction with the parenthetical, so a multi-member household wins.
   const pick=found.find(e=>e.count>1)||found[0];
   if(!pick)return null;
-  return {chinese:withCount(pick.chinese,pick.count), full:withCount(pick.full,pick.count)};
+  const n=pick.count>1?` (${pick.count})`:"";
+  const pinyin=(pick.full.match(/\(([^)]*)\)\s*$/)||[])[1]||"";
+  return {chinese:pick.chinese+n, pinyin, full:withCount(pick.full,pick.count)};
 }
 
 /* ---------- Mockups ----------
@@ -174,9 +176,16 @@ function mockPlanDeTable(s,t){
     <div class="mk mk-paper mk-frame mk-tall"><div class="mk-seal"></div><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
   </div>`;
 }
-function placeCard(name,caption){
+/* Left to itself the card wraps wherever it runs out of width, which lands
+   mid-name. The break is placed instead: characters and count on one line,
+   romanisation on its own beneath — which is how the card would be set
+   anyway. Neither line is allowed to wrap. */
+function placeCard(name,caption,sub){
   return `<figure class="mkfig">
-    <div class="mk mk-paper mk-place"><span>${esc(name)}</span><i class="mk-seal"></i></div>
+    <div class="mk mk-paper mk-place">
+      <span class="mk-nm"><span>${esc(name)}</span>${sub?`<span class="mk-sub">${esc(sub)}</span>`:""}</span>
+      <i class="mk-seal"></i>
+    </div>
     ${caption?`<figcaption class="mk-cap">${esc(caption)}</figcaption>`:""}
   </figure>`;
 }
@@ -189,7 +198,7 @@ function mockPlaceCard(s,name){
   return `<div class="mocks">
     ${placeCard(name)}
     ${v?placeCard(v.chinese,"Chinese only"):""}
-    ${v?placeCard(v.full,"Chinese + pinyin"):""}
+    ${v?placeCard(v.chinese,"Chinese + pinyin",v.pinyin):""}
   </div>`;
 }
 // Two sides, per the feedback: English solid burgundy, French reversed.
