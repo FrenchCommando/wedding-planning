@@ -202,12 +202,27 @@ function mockPlaceCard(s,name){
   </div>`;
 }
 // Two sides, per the feedback: English solid burgundy, French reversed.
+/* The two cards are the two faces of one menu, so they show the two halves
+   of the copy — English on the burgundy side, French on the cream one —
+   rather than the same text twice. The halves are split on the ——— rule the
+   copy uses to separate them; with no rule (a menu written as one block)
+   both cards fall back to showing the whole thing. */
 function mockMenu(text){
-  const lines=(text||"").split("\n").filter(l=>l.trim()).slice(0,7).map(esc).join("<br>");
-  const body=lines||"— Entrée —<br>— Plat —<br>— Fromage —<br>— Dessert —";
+  const halves=(text||"").split(/^\s*—{2,}\s*$/m);
+  const side=n=>{
+    const src=halves[n]!==undefined?halves[n]:halves[0]||"";
+    const lines=src.split("\n").filter(l=>l.trim()).slice(0,8).map(esc).join("<br>");
+    return lines||"— Entrée —<br>— Plat —<br>— Fromage —<br>— Dessert —";
+  };
   return `<div class="mocks">
-    <div class="mk mk-ink mk-arch"><div class="mk-names">${body}</div><div class="mk-menu">MENU</div></div>
-    <div class="mk mk-paper mk-arch"><div class="mk-names">${body}</div><div class="mk-menu">MENU</div></div>
+    <figure class="mkfig">
+      <div class="mk mk-ink mk-arch"><div class="mk-names">${side(0)}</div><div class="mk-menu">MENU</div></div>
+      <figcaption class="mk-cap">English</figcaption>
+    </figure>
+    <figure class="mkfig">
+      <div class="mk mk-paper mk-arch"><div class="mk-names">${side(1)}</div><div class="mk-menu">MENU</div></div>
+      <figcaption class="mk-cap">French</figcaption>
+    </figure>
   </div>`;
 }
 function mockPoster(title,sub){
