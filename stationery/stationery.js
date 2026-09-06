@@ -99,11 +99,15 @@ let expanded=new Set();
    when set, for the instructions that aren't derivable ("ivory card stock,
    3.5×2in") — the generated text is the copy, `wording` is the brief. */
 const GENERATORS={
+  // One card per person, so a household of three is the name three times
+  // rather than one card annotated with a count — a card sits at a seat, and
+  // there are three seats. The count still belongs on the table plan, where
+  // it describes a group rather than a place setting.
   "place cards":s=>{
     const out=[];
     for(const t of s.tables){
       for(const e of collapseHousehold(seatedNames(s,t)))
-        out.push(entryText(e));
+        for(let n=0;n<e.count;n++)out.push(withCount(e.name,1));
     }
     return out.join("\n");
   },
@@ -195,10 +199,12 @@ function placeCard(name,caption,sub){
    how long the pinyin line runs on a 4x8cm card. */
 function mockPlaceCard(s,name){
   const v=cjkSample(s);
+  // No count on a place card — a household of three gets three of these.
+  const bare=v?v.chinese.replace(/\s*\([^)]*\)\s*$/,""):"";
   return `<div class="mocks">
     ${placeCard(name)}
-    ${v?placeCard(v.chinese,"Chinese only"):""}
-    ${v?placeCard(v.chinese,"Chinese + pinyin",v.pinyin):""}
+    ${v?placeCard(bare,"Chinese only"):""}
+    ${v?placeCard(bare,"Chinese + pinyin",v.pinyin):""}
   </div>`;
 }
 // Two sides, per the feedback: English solid burgundy, French reversed.
