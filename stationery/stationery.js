@@ -173,12 +173,20 @@ function mockTableNumber(t){
     <div class="mk mk-paper mk-frame"><div class="mk-num">${esc(num)}</div><div class="mk-fine mk-it">Table ${esc(num)}</div></div>
   </div>`;
 }
-function mockPlanDeTable(s,t){
+function planCard(s,t){
   const num=(t.name.match(/\d+/)||["5"])[0];
   const names=collapseHousehold(seatedNames(s,t)).map(e=>esc(entryText(e))).join("<br>");
-  return `<div class="mocks">
+  return `<figure class="mkfig">
     <div class="mk mk-paper mk-frame mk-tall"><div class="mk-seal"></div><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
-  </div>`;
+    <figcaption class="mk-cap">${esc(t.name)}</figcaption>
+  </figure>`;
+}
+// Two cards, because the two cases look different on paper: a table of
+// individually named guests, and one with Chinese households carrying a
+// count. Showing only the first table hides the case worth checking.
+function mockPlanDeTable(s,t){
+  const chinese=s.tables.find(x=>x!==t&&collapseHousehold(seatedNames(s,x)).some(e=>e.count>1&&/[一-鿿]/.test(e.name)));
+  return `<div class="mocks">${planCard(s,t)}${chinese?planCard(s,chinese):""}</div>`;
 }
 /* Left to itself the card wraps wherever it runs out of width, which lands
    mid-name. The break is placed instead: characters and count on one line,
