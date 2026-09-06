@@ -196,7 +196,7 @@ function placeCard(name,caption,sub){
   return `<figure class="mkfig">
     <div class="mk mk-paper mk-place">
       <span class="mk-nm"><span>${esc(name)}</span>${sub?`<span class="mk-sub">${esc(sub)}</span>`:""}</span>
-      <i class="mk-seal"></i>
+      <i class="mk-sprig"></i><i class="mk-seal"></i>
     </div>
     ${caption?`<figcaption class="mk-cap">${esc(caption)}</figcaption>`:""}
   </figure>`;
