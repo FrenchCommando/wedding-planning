@@ -103,11 +103,14 @@ const GENERATORS={
   // rather than one card annotated with a count — a card sits at a seat, and
   // there are three seats. The count still belongs on the table plan, where
   // it describes a group rather than a place setting.
+  // Chinese only: a place card is read by one person, its owner, and the
+  // characters are their name — the romanisation is aimed at everyone else,
+  // who reads the table plan instead. That card keeps it.
   "place cards":s=>{
     const out=[];
     for(const t of s.tables){
       for(const e of collapseHousehold(seatedNames(s,t)))
-        for(let n=0;n<e.count;n++)out.push(withCount(e.name,1));
+        for(let n=0;n<e.count;n++)out.push(cardName(e.name));
     }
     return out.join("\n");
   },
@@ -207,12 +210,12 @@ function placeCard(name,caption,sub){
    how long the pinyin line runs on a 4x8cm card. */
 function mockPlaceCard(s,name){
   const v=cjkSample(s);
-  // No count on a place card — a household of three gets three of these.
+  // No count on a place card — a household of three gets three of these —
+  // and no romanisation, decided.
   const bare=v?v.chinese.replace(/\s*\([^)]*\)\s*$/,""):"";
   return `<div class="mocks">
-    ${placeCard(name)}
-    ${v?placeCard(bare,"Chinese only"):""}
-    ${v?placeCard(bare,"Chinese + pinyin",v.pinyin):""}
+    ${placeCard(cardName(name))}
+    ${v?placeCard(bare):""}
   </div>`;
 }
 // Two sides, per the feedback: English solid burgundy, French reversed.
@@ -336,6 +339,11 @@ function withCount(name,count){
   return m?`${m[1]}${n} ${m[2]}`:`${name}${n}`;
 }
 function entryText(e){return withCount(e.name,e.count);}
+// A name as it goes on a place card: characters alone for a Chinese guest,
+// the name unchanged for everyone else.
+function cardName(name){
+  return /[一-鿿]/.test(name)?name.replace(/\s*\([^)]*\)\s*$/,"").trim():name;
+}
 
 // An empty table gets no number card and no plan card — it exists on the
 // chart as a placeholder, and printing for it would order stationery for a
