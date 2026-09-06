@@ -351,8 +351,9 @@ function renderView(){
       if(det)det.addEventListener("toggle",()=>{
         if(det.open)copyOpen.add(id);else copyOpen.delete(id);
       });
+      el.querySelectorAll(".mk").forEach(mk=>mk.addEventListener("click",()=>zoomMock(mk)));
       el.addEventListener("click",async e=>{
-        if(e.target.closest("button,a,input,textarea,summary,details"))return;
+        if(e.target.closest("button,a,input,textarea,summary,details,.mk"))return;
         if(String(window.getSelection()))return;
         if(expanded.has(id))expanded.delete(id);else expanded.add(id);
         renderView();
@@ -374,6 +375,32 @@ function renderView(){
 async function loadSeating(){
   const res=await api("/seating");
   if(res.ok)seating=(await res.json()).data;
+}
+
+/* The mockups are drawn small enough to compare side by side, which is too
+   small to read the names on a plan card. Clicking one enlarges that same
+   element — a scaled clone, so the proportions and the palette are exactly
+   what the row showed, only bigger. Scale comes from the viewport rather
+   than a fixed factor, so a place card (wide and short) and a plan card
+   (tall) both land at a sensible size. */
+function zoomMock(mk){
+  const back=document.createElement("div");
+  back.className="zoom";
+  const clone=mk.cloneNode(true);
+  const w=mk.offsetWidth||120, h=mk.offsetHeight||150;
+  const scale=Math.min(window.innerWidth*0.8/w, window.innerHeight*0.8/h, 6);
+  clone.style.transform=`scale(${scale.toFixed(2)})`;
+  const holder=document.createElement("div");
+  holder.className="zoom-holder";
+  holder.style.width=w*scale+"px";
+  holder.style.height=h*scale+"px";
+  holder.appendChild(clone);
+  back.appendChild(holder);
+  const close=()=>{back.remove();window.removeEventListener("keydown",onKey);};
+  const onKey=e=>{if(e.key==="Escape")close();};
+  back.addEventListener("click",close);
+  window.addEventListener("keydown",onKey);
+  document.body.appendChild(back);
 }
 
 function downloadWording(item){
