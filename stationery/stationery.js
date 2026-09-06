@@ -143,7 +143,7 @@ function cjkSample(s){
   // interaction with the parenthetical, so a multi-member household wins.
   const pick=found.find(e=>e.count>1)||found[0];
   if(!pick)return null;
-  const n=pick.count>1?` (${pick.count})`:"";
+  const n=pick.count>1?` (${countLabel(pick.chinese,pick.count)})`:"";
   const pinyin=(pick.full.match(/\(([^)]*)\)\s*$/)||[])[1]||"";
   return {chinese:pick.chinese+n, pinyin, full:withCount(pick.full,pick.count)};
 }
@@ -287,9 +287,18 @@ function countEntries(text){
    number against the characters it belongs to, and any wrap falls in front
    of the romanisation instead. Names with no parenthetical just take the
    count at the end as before. */
+// A card written in Chinese gets a Chinese numeral — an Arabic digit beside
+// the characters is the seating chart's bookkeeping showing through, not
+// something you'd letterpress. Latin names keep the digit. Beyond ten it
+// falls back to the digit rather than building 十一 and up for a household
+// size this wedding will never see.
+const CN_NUM=["","一","二","三","四","五","六","七","八","九","十"];
+function countLabel(name,count){
+  return /[一-鿿]/.test(name)&&count<CN_NUM.length?CN_NUM[count]:String(count);
+}
 function withCount(name,count){
   const m=name.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-  const n=count>1?` (${count})`:"";
+  const n=count>1?` (${countLabel(name,count)})`:"";
   // The brackets around the pinyin are the seating chart's own notation for
   // "this is a reading aid". On a printed card there's nothing to bracket
   // it off from, and they only add another wrap point in a line that
