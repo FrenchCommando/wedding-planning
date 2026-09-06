@@ -287,14 +287,15 @@ function countEntries(text){
    number against the characters it belongs to, and any wrap falls in front
    of the romanisation instead. Names with no parenthetical just take the
    count at the end as before. */
-// A card written in Chinese gets a Chinese numeral — an Arabic digit beside
-// the characters is the seating chart's bookkeeping showing through, not
-// something you'd letterpress. Latin names keep the digit. Beyond ten it
-// falls back to the digit rather than building 十一 and up for a household
-// size this wedding will never see.
-const CN_NUM=["","一","二","三","四","五","六","七","八","九","十"];
+// A card written in Chinese counts in Chinese: 两位, 三位 — 两 rather than 二
+// for a quantity of two, and the measure word 位 because these are people
+// being counted, politely. Latin names keep the bare digit. Past ten the
+// numeral falls back to a digit rather than composing 十一 and up for a
+// household size this wedding will never have.
+const CN_NUM=["","一","两","三","四","五","六","七","八","九","十"];
 function countLabel(name,count){
-  return /[一-鿿]/.test(name)&&count<CN_NUM.length?CN_NUM[count]:String(count);
+  if(!/[一-鿿]/.test(name))return String(count);
+  return (count<CN_NUM.length?CN_NUM[count]:String(count))+"位";
 }
 function withCount(name,count){
   const m=name.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
