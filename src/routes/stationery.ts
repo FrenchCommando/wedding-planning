@@ -43,18 +43,21 @@ router.get("/stationery", requireRole("editor", "vendor"), asyncRoute(async (_re
 // Same simpler PUT as welcome-drinks/ceremony: no plain-English conflict
 // diff on save, just refuse on a stale revision and ask to reload.
 router.put("/stationery", requireRole("editor"), asyncRoute(async (req, res) => {
-  const { data, revisionId } = req.body ?? {};
+  // `keepForever` pins the revision so Drive never prunes its content — the
+  // way to mark "this is what went to the printer" and still be able to diff
+  // against it months later. Same field as the seating chart's milestone save.
+  const { data, revisionId, keepForever } = req.body ?? {};
   if (!data || typeof revisionId !== "string") {
     res.status(400).json({ error: "data and revisionId required" });
     return;
   }
 
-  const result = await writeJsonFile(FILE_NAME, data, revisionId);
+  const result = await writeJsonFile(FILE_NAME, data, revisionId, { keepForever: !!keepForever });
   if ("conflict" in result) {
     res.status(409).json({ error: "conflict", currentRevisionId: result.currentRevisionId });
     return;
   }
-  logRequest(req, "save", "stationery");
+  logRequest(req, "save", "stationery", keepForever ? "milestone" : "");
   res.json({ revisionId: result.revisionId });
 }));
 
