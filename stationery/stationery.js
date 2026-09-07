@@ -79,7 +79,7 @@ function statusClass(s){
    piece name lowercased, so a renamed piece just loses its example, not its
    wording. Downloading gives the printer a plain .txt of one piece. */
 const EXAMPLES={
-  "place cards":"One name per card, as it should be written.\n\nGuest name only — no table number (the seating display carries that).\nHousehold entries show the count: 陈林湖 (3) Chen Linhu",
+  "place cards":"One name per card, as it should be written.\n\nGuest name only — no table number (the seating display carries that).\nHousehold entries show the count: 李文轩 (三位) Li Wenxuan",
   "table numbers":"Front: the table name exactly as the seating chart writes it.\n  Table 1 … Table 20\n\nBack (optional): the salon name.\n  Salon Victoria · Salon Victor Hugo · Salon Josephine · Salon Debussy",
   "menus":"Hanna & Martial\n\n— Entrée —\n\n— Plat —\n\n— Fromage —\n\n— Dessert —\n\nDietary needs are per person; see the seating chart's print for who needs what at each table.",
   "ceremony programs":"Hanna & Martial\n\nThe order of the day, per the Ceremony page.\n\nProcessional\n…\n\nRecessional",
@@ -130,7 +130,7 @@ const GENERATORS={
 };
 let seating=null;                                   // loaded on first expand of a generated piece
 
-/* The chart stores a Chinese guest as "陈林湖 (Chen Linhu)" — the pinyin is a
+/* The chart stores a Chinese guest as "李文轩 (Li Wenxuan)" — the pinyin is a
    reading aid for whoever works the chart, not necessarily something you'd
    letterpress. Which form the calligrapher writes is a decision, so the
    place-cards row shows one real household both ways rather than picking
@@ -314,8 +314,8 @@ function countEntries(text){
   return indented.length||lines.length;
 }
 /* The count goes before the pinyin, not after the whole name: on a place
-   card "任者友 (Ren Zheyou) (2)" wraps between the two parentheticals and
-   strands the number on its own line. "任者友 (2) (Ren Zheyou)" keeps the
+   card "李文轩 (Li Wenxuan) (2)" wraps between the two parentheticals and
+   strands the number on its own line. "李文轩 (2) (Li Wenxuan)" keeps the
    number against the characters it belongs to, and any wrap falls in front
    of the romanisation instead. Names with no parenthetical just take the
    count at the end as before. */
@@ -586,16 +586,17 @@ function setupControls(){
    seating chart's own print, which stays as it is.
 
    Chinese entries are one household per line. The chart stores extra party
-   members as their own guest records suffixed `+1`, `+2` (`陈林湖 +1
-   (Chen Linhu +1)`) because each occupies a real seat; on a name list those
+   members as their own guest records suffixed `+1`, `+2` (`李文轩 +1
+   (Li Wenxuan +1)`) because each occupies a real seat; on a name list those
    are one household, so they collapse to the base name with the household
-   headcount in parentheses — `陈林湖 (Chen Linhu) (3)` for a base plus +1 and
+   headcount in parentheses — `李文轩 (Li Wenxuan) (3)` for a base plus +1 and
    +2. The count is the total, not the number of extras. Collapsing keys on
    the base name, so members split across tables collapse per table, not into
-   one line under whichever table came first. */
+   one line under whichever table came first. (Names in these comments are
+   invented — this repo is public, the guest list is not.) */
 function baseName(name){
   // Strips a trailing " +N" from both the Chinese name and the pinyin
-  // parenthetical: "陈林湖 +1 (Chen Linhu +1)" → "陈林湖 (Chen Linhu)".
+  // parenthetical: "李文轩 +1 (Li Wenxuan +1)" → "李文轩 (Li Wenxuan)".
   return name.replace(/\s*\+\d+\b/g, "").trim();
 }
 function collapseHousehold(names){
