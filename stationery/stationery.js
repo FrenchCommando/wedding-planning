@@ -331,7 +331,10 @@ function countLabel(name,count){
 }
 function withCount(name,count){
   const m=name.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-  const n=count>1?` (${countLabel(name,count)})`:"";
+  // A Chinese entry always states its headcount, 一位 included — the count is
+  // part of how the line reads, not an annotation added only when there's
+  // more than one. Latin names take a count only when there is one to make.
+  const n=(count>1||/[一-鿿]/.test(name))?` (${countLabel(name,count)})`:"";
   // The brackets around the pinyin are the seating chart's own notation for
   // "this is a reading aid". On a printed card there's nothing to bracket
   // it off from, and they only add another wrap point in a line that
