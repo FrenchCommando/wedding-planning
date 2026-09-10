@@ -75,15 +75,14 @@ input,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-
    gutter; column 2 the romanisation, starting from it. A Latin name spans
    both and right-aligns, so an all-Latin table reads as the proof's. */
 .mk-tall .mk-names{position:absolute;left:8%;right:11%;bottom:7%;max-height:36%;overflow:hidden;
-  display:grid;grid-template-columns:auto auto;column-gap:.7em;justify-content:space-between;align-content:end;
+  display:grid;grid-template-columns:auto auto;column-gap:.7em;justify-content:end;align-content:end;
   text-transform:uppercase;letter-spacing:.1em;font-size:var(--names,5.5px);line-height:1.5;}
 .mk-entry{display:contents;}
-/* Both columns right-aligned, spread across the box: characters end at
-   their column's edge, romanisation at the card's. A Latin name spans
-   both, at the right. */
+/* One central gutter: characters end at it, romanisation starts from it,
+   block packed to the right. A Latin name spans both, at the right. */
 .mk-main{text-align:right;white-space:nowrap;}
-.mk-lat .mk-main{grid-column:1/-1;text-align:right;}
-.mk-rom{text-align:right;white-space:nowrap;letter-spacing:.14em;}
+.mk-lat .mk-main{grid-column:1/-1;}
+.mk-rom{text-align:left;white-space:nowrap;letter-spacing:.14em;}
 .mk-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-6px 0 14px;color:var(--muted);font-size:12px;}
 .mk-tools button{padding:2px 8px;font-size:12px;}
 .mk-tools button:disabled{opacity:.4;cursor:default;}
