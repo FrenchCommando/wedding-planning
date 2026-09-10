@@ -238,7 +238,11 @@ function fitPlanCards(box){
     if(!names)return;
     let size=NAMES_DEFAULT;
     mk.style.setProperty("--names",size+"px");
-    while(size>NAMES_MIN&&names.scrollHeight>names.clientHeight+0.5){
+    // Too tall, or too wide: the credits grid is packed to the right, so a
+    // long romanisation spills off the left where scrollWidth doesn't see
+    // it — the first cell's edge against the box's is the width test.
+    const tooWide=()=>{const m=names.querySelector(".mk-main");return !!m&&m.getBoundingClientRect().left<names.getBoundingClientRect().left-0.5;};
+    while(size>NAMES_MIN&&(names.scrollHeight>names.clientHeight+0.5||tooWide())){
       size-=0.25;
       mk.style.setProperty("--names",size+"px");
     }

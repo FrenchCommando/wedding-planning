@@ -33,7 +33,7 @@ body{margin:0;background:#3a3532;color:#e9e2d6;font-family:-apple-system,BlinkMa
    names, starting from it. A Latin name spans both columns and
    right-aligns, so an all-Latin table reads exactly as the proof's. */
 .names{position:absolute;left:1cm;right:1.3cm;bottom:1.1cm;max-height:7.2cm;overflow:hidden;
-  display:grid;grid-template-columns:auto auto;column-gap:.5cm;justify-content:end;align-content:end;
+  display:grid;grid-template-columns:auto auto;column-gap:.35cm;justify-content:end;align-content:end;
   text-transform:uppercase;letter-spacing:.14em;font-weight:500;font-size:var(--names);line-height:1.45;}
 .entry{display:contents;}
 .main{text-align:right;white-space:nowrap;}

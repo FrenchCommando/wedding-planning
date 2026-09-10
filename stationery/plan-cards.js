@@ -43,7 +43,13 @@ function fit(){
     let size=namesSize||NAMES_DEFAULT;
     c.style.setProperty("--names",size+"cm");
     if(namesSize)return;
-    while(size>NAMES_MIN&&names.scrollHeight>names.clientHeight+1){
+    // Overflow is vertical (a long table) or horizontal (a Chinese name
+    // with a long romanisation pushing the credits grid wider than the
+    // box) — either one steps the size down. The grid is packed to the
+    // end, so a too-wide one spills off the left, which scrollWidth
+    // doesn't count; the first cell's edge against the box's is the test.
+    const tooWide=()=>{const m=names.querySelector(".main");return !!m&&m.getBoundingClientRect().left<names.getBoundingClientRect().left-0.5;};
+    while(size>NAMES_MIN&&(names.scrollHeight>names.clientHeight+1||tooWide())){
       size=Math.round((size-STEP)*100)/100;
       c.style.setProperty("--names",size+"cm");
     }
