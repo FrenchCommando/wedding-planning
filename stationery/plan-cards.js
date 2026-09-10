@@ -15,7 +15,8 @@ let namesSize=(()=>{try{const v=Number(localStorage.getItem("stationery.planName
 function entry(e){
   const {main,rom}=splitEntry(e);
   const cjk=/[一-鿿]/.test(main);
-  return `<div class="entry${cjk?" cjk":""}"><span class="main">${esc(main)}</span>${rom?`<span class="rom">${esc(rom)}</span>`:""}</div>`;
+  if(!rom)return `<div class="entry lat"><span class="main">${esc(main)}</span></div>`;
+  return `<div class="entry${cjk?" cjk":""}"><span class="main">${esc(main)}</span><span class="rom">${esc(rom)}</span></div>`;
 }
 function card(s,t,room){
   const num=(t.name.match(/\d+/)||[t.name])[0];

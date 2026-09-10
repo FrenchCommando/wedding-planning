@@ -176,12 +176,14 @@ function mockTableNumber(t){
     <div class="mk mk-paper mk-frame"><div class="mk-num">${esc(num)}</div><div class="mk-fine mk-it">Table ${esc(num)}</div></div>
   </div>`;
 }
-/* A Chinese entry is set on two lines — characters and count, then the
-   romanisation smaller beneath — the same break the place card uses, so a
-   long household line never wraps mid-pinyin. Latin names are one line. */
+/* Entries are set like film credits: two columns on one gutter, the
+   characters and count ending at it, the romanisation starting from it.
+   A Latin name has no second half, so it spans both columns and
+   right-aligns like the proof's. Nothing wraps. */
 function planEntry(e){
   const {main,rom}=splitEntry(e);
-  return `<div class="mk-entry">${esc(main)}${rom?`<span class="mk-rom">${esc(rom)}</span>`:""}</div>`;
+  if(!rom)return `<div class="mk-entry mk-lat"><span class="mk-main">${esc(main)}</span></div>`;
+  return `<div class="mk-entry"><span class="mk-main">${esc(main)}</span><span class="mk-rom">${esc(rom)}</span></div>`;
 }
 /* Laid out as the designer's proof: the number large at the top left, the
    salon in italics on the right with a short rule, the names stacked

@@ -27,15 +27,21 @@ body{margin:0;background:#3a3532;color:#e9e2d6;font-family:-apple-system,BlinkMa
 .salon::after{content:"";display:block;width:.8cm;height:.03cm;background:currentColor;margin:.25cm 0 0 auto;}
 /* Names: right-aligned column at the foot, spaced capitals. `--names` is the
    size; the fit routine lowers it per card until the column fits the box. */
+/* Set like film credits: two columns on one gutter. Column 1 is the
+   characters with their headcount — 两位, 三位 — ending at the gutter;
+   column 2 the romanisation in the same spaced capitals as the Latin
+   names, starting from it. A Latin name spans both columns and
+   right-aligns, so an all-Latin table reads exactly as the proof's. */
 .names{position:absolute;left:1cm;right:1.3cm;bottom:1.1cm;max-height:7.2cm;overflow:hidden;
-  text-align:right;text-transform:uppercase;letter-spacing:.14em;font-weight:500;font-size:var(--names);line-height:1.45;}
-.entry{white-space:nowrap;}
-/* A Chinese household. The characters carry the headcount — 两位, 三位 — in a
-   serif that has them, a touch larger than the capitals so the two scripts
-   read at the same weight, and the romanisation goes beneath in the same
-   spaced capitals as the Latin names, one step smaller. */
+  display:grid;grid-template-columns:auto auto;column-gap:.5cm;justify-content:end;align-content:end;
+  text-transform:uppercase;letter-spacing:.14em;font-weight:500;font-size:var(--names);line-height:1.45;}
+.entry{display:contents;}
+.main{text-align:right;white-space:nowrap;}
+.entry.lat .main{grid-column:1/-1;}
+/* The characters sit in a serif that has them, a touch larger than the
+   capitals so the two scripts read at the same weight. */
 .entry.cjk .main{font-family:"Noto Serif SC","Songti SC","STSong",SimSun,serif;font-size:1.12em;letter-spacing:.08em;text-transform:none;}
-.rom{display:block;font-size:.78em;letter-spacing:.16em;line-height:1.35;margin-bottom:.06cm;}
+.rom{text-align:left;white-space:nowrap;letter-spacing:.16em;}
 
 @page{size:12cm 17cm;margin:0;}
 @media print{

@@ -4,7 +4,9 @@
     { "id": 2, "name": "Invitations", "status": "Proofing", "quantity": 95, "vendor": "Papier Test", "dueDate": "2026-06-15", "cost": 640, "notes": "Second proof pending" },
     { "id": 3, "name": "Menus", "status": "To do", "quantity": 175, "vendor": "", "dueDate": "2026-08-20", "notes": "One per seat" },
     { "id": 4, "name": "Place cards", "status": "Designing", "quantity": 175, "vendor": "", "dueDate": "2026-08-25", "notes": "Names come from the seating chart" },
-    { "id": 5, "name": "Welcome sign", "status": "Ordered", "quantity": 1, "vendor": "Signs Dev Co", "dueDate": "2026-08-10", "cost": 120, "notes": "" }
+    { "id": 5, "name": "Welcome sign", "status": "Ordered", "quantity": 1, "vendor": "Signs Dev Co", "dueDate": "2026-08-10", "cost": 120, "notes": "" },
+    { "id": 6, "name": "Table plan cards", "status": "Proofing", "quantity": 4, "vendor": "Papier Test", "dueDate": "2026-09-20", "notes": "One per table, 12×17, names from the seating chart", "wording": "Burgundy frame on cream. Number top left, salon right, names at the foot." },
+    { "id": 7, "name": "Table numbers", "status": "To do", "quantity": 4, "vendor": "Papier Test", "notes": "" }
   ],
-  "nextId": 6
+  "nextId": 8
 }

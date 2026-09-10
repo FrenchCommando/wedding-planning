@@ -1,14 +1,51 @@
 {
-  "rooms": [{ "id": 1, "name": "Main Hall", "x1": 0.05, "y1": 0.05, "x2": 0.95, "y2": 0.95 }],
+  "rooms": [
+    { "id": 1, "name": "Salon Victoria", "x1": 0.05, "y1": 0.05, "x2": 0.5, "y2": 0.95 },
+    { "id": 2, "name": "Salon Victor Hugo", "x1": 0.55, "y1": 0.05, "x2": 0.95, "y2": 0.95 }
+  ],
   "tables": [
-    { "id": 1, "roomId": 1, "name": "Table 1", "seats": [1, 2, null, null, null, null, null, null, null, null], "onPlan": true, "fx": 0.3, "fy": 0.3, "oval": false },
-    { "id": 2, "roomId": 1, "name": "Table 2", "seats": [3, null, null, null, null, null, null, null, null, null], "onPlan": true, "fx": 0.6, "fy": 0.3, "oval": false }
+    { "id": 1, "roomId": 1, "name": "Table 1", "seats": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "onPlan": true, "fx": 0.2, "fy": 0.3, "oval": false },
+    { "id": 2, "roomId": 1, "name": "Table 2", "seats": [11, 12, 13, 14, 15, 16, 17, null, null, null], "onPlan": true, "fx": 0.2, "fy": 0.7, "oval": false },
+    { "id": 3, "roomId": 2, "name": "Table 5", "seats": [18, 19, 20, 21, 22, 23, 24, 25, 26, null], "onPlan": true, "fx": 0.75, "fy": 0.3, "oval": false },
+    { "id": 4, "roomId": 2, "name": "Table 6", "seats": [27, 28, 29, 30, 31, 32, 33, 34, null, null], "onPlan": true, "fx": 0.75, "fy": 0.7, "oval": false },
+    { "id": 5, "roomId": 2, "name": "Table 7", "seats": [null, null, null, null, null, null, null, null, null, null], "onPlan": true, "fx": 0.75, "fy": 0.9, "oval": false }
   ],
   "guests": [
-    { "id": 1, "name": "Alice Test", "party": "Bride's family" },
-    { "id": 2, "name": "Bob Test", "party": "Bride's family" },
-    { "id": 3, "name": "Carol Test", "party": "Groom's family" }
+    { "id": 1, "name": "Alice Test", "party": "Couple" },
+    { "id": 2, "name": "Bob Test", "party": "Couple" },
+    { "id": 3, "name": "Carol Fictional", "party": "Bride's family" },
+    { "id": 4, "name": "Daniel Fictional", "party": "Bride's family" },
+    { "id": 5, "name": "Émilie Sample-Dupont", "party": "Bride's family" },
+    { "id": 6, "name": "Francis Sample", "party": "Bride's family" },
+    { "id": 7, "name": "Gabrielle Placeholder", "party": "Friends" },
+    { "id": 8, "name": "Henri Placeholder", "party": "Friends" },
+    { "id": 9, "name": "Isabella Von Longername", "party": "Friends" },
+    { "id": 10, "name": "Jules Test", "party": "Friends" },
+    { "id": 11, "name": "Karen Example", "party": "Groom's family" },
+    { "id": 12, "name": "Liam Example", "party": "Groom's family" },
+    { "id": 13, "name": "Maria Example", "party": "Groom's family" },
+    { "id": 14, "name": "Noah Example", "party": "Groom's family" },
+    { "id": 15, "name": "Olivia Stand-In", "party": "Groom's family" },
+    { "id": 16, "name": "Paul Stand-In", "party": "Groom's family" },
+    { "id": 17, "name": "Quinn Stand-In", "party": "Groom's family" },
+    { "id": 18, "name": "李文轩 (Li Wenxuan)", "party": "Groom's family" },
+    { "id": 19, "name": "李文轩 +1 (Li Wenxuan +1)", "party": "Groom's family" },
+    { "id": 20, "name": "陈美玲 (Chen Meiling)", "party": "Groom's family" },
+    { "id": 21, "name": "王建国 (Wang Jianguo)", "party": "Groom's family" },
+    { "id": 22, "name": "王建国 +1 (Wang Jianguo +1)", "party": "Groom's family" },
+    { "id": 23, "name": "王建国 +2 (Wang Jianguo +2)", "party": "Groom's family" },
+    { "id": 24, "name": "欧阳向上 (Ouyang Xiangshang)", "party": "Groom's family" },
+    { "id": 25, "name": "张伟 (Zhang Wei)", "party": "Groom's family" },
+    { "id": 26, "name": "林娜 (Lin Na)", "party": "Groom's family" },
+    { "id": 27, "name": "赵敏 (Zhao Min)", "party": "Groom's family" },
+    { "id": 28, "name": "赵敏 +1 (Zhao Min +1)", "party": "Groom's family" },
+    { "id": 29, "name": "Rachel Mixed", "party": "Friends" },
+    { "id": 30, "name": "Samuel Mixed", "party": "Friends" },
+    { "id": 31, "name": "周杰伦 (Zhou Jielun)", "party": "Friends" },
+    { "id": 32, "name": "Théo Accent-Été", "party": "Friends" },
+    { "id": 33, "name": "黄晓明 (Huang Xiaoming)", "party": "Friends" },
+    { "id": 34, "name": "黄晓明 +1 (Huang Xiaoming +1)", "party": "Friends" }
   ],
   "partyColors": {},
-  "nextId": 4
+  "nextId": 35
 }
