@@ -57,13 +57,33 @@ input,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-
 /* The inset rules replace .mk's shadow rather than adding to it, so the
    paper's own drop shadow has to be repeated here or a framed card floats. */
 .mk-frame{box-shadow:inset 0 0 0 1px var(--ink),inset 0 0 0 5px var(--paper),0 1px 2px rgba(60,45,20,.18);}
-.mk-ink.mk-tall{box-shadow:inset 0 0 0 1px var(--paper),inset 0 0 0 5px var(--ink),0 1px 2px rgba(60,45,20,.18);}
 .mk-num{font-size:34px;line-height:1;font-weight:400;}
 .mk-fine{font-size:7px;letter-spacing:.12em;line-height:1.5;}
 .mk-it{font-style:italic;letter-spacing:0;font-size:8px;}
 .mk-names{font-size:5.5px;line-height:1.65;letter-spacing:.04em;}
-.mk-tall{height:147px;justify-content:flex-start;padding-top:12px;}
-.mk-tall .mk-num{font-size:26px;margin-bottom:4px;}
+/* Table plan card, as the designer's proof lays it out: a thick burgundy
+   frame, the number top-left, the salon in italics at the right with a
+   short rule under it, the names right-aligned at the foot in spaced
+   capitals. Positions are percentages of the 12×17 card so the enlarged
+   view keeps them. `--names` is the names' size — set per card by the
+   auto-fit, or by the stepper for all cards at once. */
+.mk-tall{position:relative;display:block;height:147px;padding:0;border:3.5px solid var(--ink);box-shadow:0 1px 2px rgba(60,45,20,.18);}
+.mk-tall .mk-num{position:absolute;left:11%;top:6%;font-size:34px;line-height:1;font-weight:300;letter-spacing:-.02em;}
+.mk-salon{position:absolute;right:11%;top:44%;font-size:7.5px;font-style:italic;white-space:nowrap;}
+.mk-salon::after{content:"";display:block;width:8px;height:1px;background:currentColor;margin:3px 0 0 auto;}
+.mk-tall .mk-names{position:absolute;left:8%;right:11%;bottom:7%;max-height:36%;overflow:hidden;
+  text-align:right;text-transform:uppercase;letter-spacing:.1em;font-size:var(--names,5.5px);line-height:1.5;}
+.mk-entry{white-space:nowrap;}
+/* A Chinese household: characters and count at the names' size, the
+   romanisation a step smaller on its own line. The characters aren't
+   uppercased — they can't be — but the property still hits the pinyin. */
+.mk-rom{display:block;font-size:.8em;letter-spacing:.14em;}
+.mk-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:-6px 0 14px;color:var(--muted);font-size:12px;}
+.mk-tools button{padding:2px 8px;font-size:12px;}
+.mk-tools button:disabled{opacity:.4;cursor:default;}
+.mk-size{min-width:38px;text-align:center;font-variant-numeric:tabular-nums;}
+.mk-link{margin-left:auto;color:var(--accent);text-decoration:none;}
+.mk-link:hover{text-decoration:underline;}
 /* 4x8cm, landscape — twice as wide as tall. */
 .mk-place{width:136px;height:68px;box-shadow:inset 0 0 0 1px currentColor,0 1px 2px rgba(60,45,20,.18);font-size:10px;letter-spacing:.1em;}
 /* 10x20cm, arched top. */
@@ -88,7 +108,6 @@ input,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-
 .mk-sprig::after{content:"";position:absolute;left:2px;top:1px;width:5px;height:5px;border-radius:50%;
   background:#c2607a;box-shadow:6px 2px 0 -1px #c2607a,2px 7px 0 -1px #d98da2;}
 .mk-place .mk-seal{margin-left:6px;}
-.mk-tall .mk-seal{margin:-6px 0 4px;}
 .mk-place{display:flex;flex-direction:row;align-items:center;justify-content:center;}
 .mk-nm{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;}
 .mk-nm>span{white-space:nowrap;}

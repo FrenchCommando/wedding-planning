@@ -1,0 +1,47 @@
+/* Table plan cards at print size. Everything on the card is in centimetres
+   of the 12×17 sheet, so what the screen shows is what comes off the
+   printer; the screen just adds a grey ground and a toolbar. The palette
+   is the suite's, fixed — this is paper, not a page that follows the OS. */
+:root{--paper:#f2e7dc;--ink:#7a1f2b;--names:.42cm;}
+*{box-sizing:border-box;}
+body{margin:0;background:#3a3532;color:#e9e2d6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;}
+.bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:#26221f;border-bottom:1px solid #4a433d;}
+.bar a{color:inherit;text-decoration:none;opacity:.8;}
+.bar .hint{flex:1;min-width:200px;opacity:.7;font-size:12px;}
+.bar label{display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.bar button{padding:4px 10px;border:1px solid #6a625a;border-radius:6px;background:transparent;color:inherit;font:inherit;cursor:pointer;}
+.bar button:disabled{opacity:.4;cursor:default;}
+#size{min-width:44px;text-align:center;font-variant-numeric:tabular-nums;}
+#err{color:#f0a49b;text-align:center;padding:12px;}
+#err:empty{display:none;}
+#sheet{display:flex;flex-wrap:wrap;gap:1cm;justify-content:center;padding:1cm;}
+
+.card{position:relative;width:12cm;height:17cm;flex:none;background:var(--paper);color:var(--ink);
+  border:.42cm solid var(--ink);box-shadow:0 .2cm .6cm rgba(0,0,0,.35);overflow:hidden;
+  font-family:"Cormorant Garamond",Georgia,"Noto Serif SC","Songti SC",SimSun,serif;}
+/* Number: top left, a hairline didone, sized to the proof's — the glyph
+   runs about a fifth of the card's height. */
+.num{position:absolute;left:1.3cm;top:.9cm;font-family:"Bodoni Moda","Didot","Bodoni 72",Georgia,serif;font-weight:400;font-size:4.4cm;line-height:1;letter-spacing:-.03em;}
+/* Salon: italics at the right, halfway down, a short rule beneath. */
+.salon{position:absolute;right:1.3cm;top:7.3cm;font-style:italic;font-weight:500;font-size:.75cm;line-height:1;white-space:nowrap;}
+.salon::after{content:"";display:block;width:.8cm;height:.03cm;background:currentColor;margin:.25cm 0 0 auto;}
+/* Names: right-aligned column at the foot, spaced capitals. `--names` is the
+   size; the fit routine lowers it per card until the column fits the box. */
+.names{position:absolute;left:1cm;right:1.3cm;bottom:1.1cm;max-height:7.2cm;overflow:hidden;
+  text-align:right;text-transform:uppercase;letter-spacing:.14em;font-weight:500;font-size:var(--names);line-height:1.45;}
+.entry{white-space:nowrap;}
+/* A Chinese household. The characters carry the headcount — 两位, 三位 — in a
+   serif that has them, a touch larger than the capitals so the two scripts
+   read at the same weight, and the romanisation goes beneath in the same
+   spaced capitals as the Latin names, one step smaller. */
+.entry.cjk .main{font-family:"Noto Serif SC","Songti SC","STSong",SimSun,serif;font-size:1.12em;letter-spacing:.08em;text-transform:none;}
+.rom{display:block;font-size:.78em;letter-spacing:.16em;line-height:1.35;margin-bottom:.06cm;}
+
+@page{size:12cm 17cm;margin:0;}
+@media print{
+  body{background:#fff;}
+  .bar,#err{display:none;}
+  #sheet{display:block;padding:0;}
+  .card{box-shadow:none;page-break-after:always;break-after:page;margin:0;}
+  .card:last-child{page-break-after:auto;break-after:auto;}
+}

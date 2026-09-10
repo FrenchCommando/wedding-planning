@@ -176,20 +176,78 @@ function mockTableNumber(t){
     <div class="mk mk-paper mk-frame"><div class="mk-num">${esc(num)}</div><div class="mk-fine mk-it">Table ${esc(num)}</div></div>
   </div>`;
 }
+/* A Chinese entry is set on two lines — characters and count, then the
+   romanisation smaller beneath — the same break the place card uses, so a
+   long household line never wraps mid-pinyin. Latin names are one line. */
+function planEntry(e){
+  const {main,rom}=splitEntry(e);
+  return `<div class="mk-entry">${esc(main)}${rom?`<span class="mk-rom">${esc(rom)}</span>`:""}</div>`;
+}
+/* Laid out as the designer's proof: the number large at the top left, the
+   salon in italics on the right with a short rule, the names stacked
+   right-aligned at the foot. The proof set the Chinese tables in a face
+   with no CJK glyphs, so the characters came out as empty brackets and
+   the romanisation wrapped mid-name — this is the corrected version. */
 function planCard(s,t){
   const num=(t.name.match(/\d+/)||["5"])[0];
-  const names=collapseHousehold(seatedNames(s,t)).map(e=>esc(entryText(e))).join("<br>");
+  const room=s.rooms.find(r=>r.id===t.roomId);
+  const names=collapseHousehold(seatedNames(s,t)).map(planEntry).join("");
+  const size=planNamesSize?` style="--names:${planNamesSize}px"`:"";
   return `<figure class="mkfig">
-    <div class="mk mk-paper mk-frame mk-tall"><div class="mk-seal"></div><div class="mk-num">${esc(num)}</div><div class="mk-names">${names}</div></div>
+    <div class="mk mk-paper mk-tall"${size}><div class="mk-num">${esc(num)}</div><div class="mk-salon">${esc(room?room.name:"")}</div><div class="mk-names">${names}</div></div>
     <figcaption class="mk-cap">${esc(t.name)}</figcaption>
   </figure>`;
+}
+/* Names on the plan card: "Auto" shrinks each card's list until it fits
+   (a table of ten with pinyin lines is a lot of text on 12×17cm), and the
+   stepper overrides that with one fixed size across every card, so two
+   tables can be compared at the same setting. The choice is this browser's
+   only — it's a preview preference, not stationery data. */
+const NAMES_AUTO=null, NAMES_MIN=3, NAMES_MAX=9, NAMES_DEFAULT=5.5;
+let planNamesSize=(()=>{try{const v=Number(localStorage.getItem("stationery.planNames"));return v>0?v:NAMES_AUTO;}catch{return NAMES_AUTO;}})();
+function setPlanNamesSize(v){
+  planNamesSize=v;
+  try{if(v)localStorage.setItem("stationery.planNames",String(v));else localStorage.removeItem("stationery.planNames");}catch{}
+  renderView();
+}
+function planTools(){
+  const cur=planNamesSize;
+  const label=cur?`${cur}px`:"Auto";
+  return `<div class="mk-tools" data-tools="plan"><span>Names</span>
+    <button class="secondary" data-size="down" title="Smaller names"${cur&&cur<=NAMES_MIN?" disabled":""}>A−</button>
+    <span class="mk-size">${label}</span>
+    <button class="secondary" data-size="up" title="Larger names"${cur&&cur>=NAMES_MAX?" disabled":""}>A+</button>
+    <button class="secondary" data-size="auto"${cur?"":" disabled"}>Auto</button>
+    <a class="mk-link" href="/stationery/plan-cards.html" target="_blank" rel="noopener">Print preview, all tables ↗</a></div>`;
+}
+function stepPlanNames(dir){
+  if(dir==="auto")return setPlanNamesSize(NAMES_AUTO);
+  const cur=planNamesSize||NAMES_DEFAULT;
+  const next=Math.round((cur+(dir==="up"?0.5:-0.5))*2)/2;
+  setPlanNamesSize(Math.min(NAMES_MAX,Math.max(NAMES_MIN,next)));
+}
+// In Auto, a card whose list overruns the paper steps its names down until
+// they fit. Needs the card in the DOM, so it runs after each render; the
+// size lands as an inline custom property, which the zoom clone carries.
+function fitPlanCards(box){
+  if(planNamesSize)return;
+  box.querySelectorAll(".mk-tall").forEach(mk=>{
+    const names=mk.querySelector(".mk-names");
+    if(!names)return;
+    let size=NAMES_DEFAULT;
+    mk.style.setProperty("--names",size+"px");
+    while(size>NAMES_MIN&&names.scrollHeight>names.clientHeight+0.5){
+      size-=0.25;
+      mk.style.setProperty("--names",size+"px");
+    }
+  });
 }
 // Two cards, because the two cases look different on paper: a table of
 // individually named guests, and one with Chinese households carrying a
 // count. Showing only the first table hides the case worth checking.
 function mockPlanDeTable(s,t){
   const chinese=s.tables.find(x=>x!==t&&collapseHousehold(seatedNames(s,x)).some(e=>e.count>1&&/[一-鿿]/.test(e.name)));
-  return `<div class="mocks">${planCard(s,t)}${chinese?planCard(s,chinese):""}</div>`;
+  return `<div class="mocks">${planCard(s,t)}${chinese?planCard(s,chinese):""}</div>${planTools()}`;
 }
 /* Left to itself the card wraps wherever it runs out of width, which lands
    mid-name. The break is placed instead: characters and count on one line,
@@ -313,51 +371,8 @@ function countEntries(text){
   const indented=lines.filter(l=>l.startsWith("  "));
   return indented.length||lines.length;
 }
-/* The count goes before the pinyin, not after the whole name: on a place
-   card "李文轩 (Li Wenxuan) (2)" wraps between the two parentheticals and
-   strands the number on its own line. "李文轩 (2) (Li Wenxuan)" keeps the
-   number against the characters it belongs to, and any wrap falls in front
-   of the romanisation instead. Names with no parenthetical just take the
-   count at the end as before. */
-// A card written in Chinese counts in Chinese: 两位, 三位 — 两 rather than 二
-// for a quantity of two, and the measure word 位 because these are people
-// being counted, politely. Latin names keep the bare digit. Past ten the
-// numeral falls back to a digit rather than composing 十一 and up for a
-// household size this wedding will never have.
-const CN_NUM=["","一","两","三","四","五","六","七","八","九","十"];
-function countLabel(name,count){
-  if(!/[一-鿿]/.test(name))return String(count);
-  return (count<CN_NUM.length?CN_NUM[count]:String(count))+"位";
-}
-function withCount(name,count){
-  const m=name.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
-  // A Chinese entry always states its headcount, 一位 included — the count is
-  // part of how the line reads, not an annotation added only when there's
-  // more than one. Latin names take a count only when there is one to make.
-  const n=(count>1||/[一-鿿]/.test(name))?` (${countLabel(name,count)})`:"";
-  // The brackets around the pinyin are the seating chart's own notation for
-  // "this is a reading aid". On a printed card there's nothing to bracket
-  // it off from, and they only add another wrap point in a line that
-  // already breaks badly — so the romanisation prints plain.
-  return m?`${m[1]}${n} ${m[2]}`:`${name}${n}`;
-}
-function entryText(e){return withCount(e.name,e.count);}
-// A name as it goes on a place card: characters alone for a Chinese guest,
-// the name unchanged for everyone else.
-function cardName(name){
-  return /[一-鿿]/.test(name)?name.replace(/\s*\([^)]*\)\s*$/,"").trim():name;
-}
-
-// An empty table gets no number card and no plan card — it exists on the
-// chart as a placeholder, and printing for it would order stationery for a
-// table nobody sits at. Table count on the piece follows from this, so a
-// table emptied later drops out of the copy on the next open.
-function usedTables(s,room){
-  return s.tables.filter(t=>t.roomId===room.id&&(t.seats||[]).some(Boolean));
-}
-function seatedNames(s,t){
-  return (t.seats||[]).map(id=>id?s.guests.find(g=>g.id===id):null).filter(Boolean).map(g=>g.name);
-}
+// Name handling (collapseHousehold, withCount, cardName, usedTables, …)
+// lives in names.js, shared with the plan-cards print sheet.
 
 function renderView(){
   const box=document.getElementById("itemBox");
@@ -392,8 +407,9 @@ function renderView(){
         if(det.open)copyOpen.add(id);else copyOpen.delete(id);
       });
       el.querySelectorAll(".mk").forEach(mk=>mk.addEventListener("click",()=>zoomMock(mk)));
+      el.querySelectorAll("[data-size]").forEach(b=>b.addEventListener("click",()=>stepPlanNames(b.dataset.size)));
       el.addEventListener("click",async e=>{
-        if(e.target.closest("button,a,input,textarea,summary,details,.mk"))return;
+        if(e.target.closest("button,a,input,textarea,summary,details,.mk,.mk-tools"))return;
         if(String(window.getSelection()))return;
         if(expanded.has(id))expanded.delete(id);else expanded.add(id);
         renderView();
@@ -408,6 +424,7 @@ function renderView(){
       const dl=el.querySelector('[data-action="download"]');
       if(dl)dl.addEventListener("click",()=>downloadWording(items.find(i=>i.id===id)));
     });
+    fitPlanCards(box);
   }
   document.getElementById("addBar").style.display="none";
 }
@@ -578,37 +595,6 @@ function setupControls(){
   if(session)roleTag.textContent=session.role;
 }
 
-/* ---------- Name list (for ordering place cards) ----------
-   Reads the seating chart live and prints table-by-table name lists. This is
-   what the calligrapher/printer works from, so it carries names and nothing
-   else: no dietary markers, no pending-RSVP markers, no party colours, no
-   seat numbering beyond position in the table. Those all belong on the
-   seating chart's own print, which stays as it is.
-
-   Chinese entries are one household per line. The chart stores extra party
-   members as their own guest records suffixed `+1`, `+2` (`李文轩 +1
-   (Li Wenxuan +1)`) because each occupies a real seat; on a name list those
-   are one household, so they collapse to the base name with the household
-   headcount in parentheses — `李文轩 (Li Wenxuan) (3)` for a base plus +1 and
-   +2. The count is the total, not the number of extras. Collapsing keys on
-   the base name, so members split across tables collapse per table, not into
-   one line under whichever table came first. (Names in these comments are
-   invented — this repo is public, the guest list is not.) */
-function baseName(name){
-  // Strips a trailing " +N" from both the Chinese name and the pinyin
-  // parenthetical: "李文轩 +1 (Li Wenxuan +1)" → "李文轩 (Li Wenxuan)".
-  return name.replace(/\s*\+\d+\b/g, "").trim();
-}
-function collapseHousehold(names){
-  const out=[], seen=new Map();
-  for(const n of names){
-    const key=baseName(n);
-    if(seen.has(key)){out[seen.get(key)].count++;continue;}
-    seen.set(key,out.length);
-    out.push({name:key,count:1});
-  }
-  return out;
-}
 /* ---------- Download all ----------
    One plain-text file covering every piece: what it is, how many, who's
    printing it, the brief, then the copy. That is the whole handover to the
