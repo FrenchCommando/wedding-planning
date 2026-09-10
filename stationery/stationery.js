@@ -205,7 +205,7 @@ function planCard(s,t){
    stepper overrides that with one fixed size across every card, so two
    tables can be compared at the same setting. The choice is this browser's
    only — it's a preview preference, not stationery data. */
-const NAMES_AUTO=null, NAMES_MIN=3, NAMES_MAX=9, NAMES_DEFAULT=5.5;
+const NAMES_AUTO=null, NAMES_MIN=3, NAMES_MAX=9, NAMES_DEFAULT=4.5;
 let planNamesSize=(()=>{try{const v=Number(localStorage.getItem("stationery.planNames"));return v>0?v:NAMES_AUTO;}catch{return NAMES_AUTO;}})();
 function setPlanNamesSize(v){
   planNamesSize=v;

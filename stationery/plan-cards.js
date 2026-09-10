@@ -9,7 +9,7 @@ function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">
    stationery page's mockup so the two agree, though the units differ —
    the mockup counts px on a 104px card, this page cm on a 12cm one — so
    only the "Auto vs fixed" state is shared, not the number. */
-const NAMES_DEFAULT=0.42, NAMES_MIN=0.24, NAMES_MAX=0.6, STEP=0.02;
+const NAMES_DEFAULT=0.32, NAMES_MIN=0.2, NAMES_MAX=0.6, STEP=0.02;
 let namesSize=(()=>{try{const v=Number(localStorage.getItem("stationery.planNamesCm"));return v>0?v:null;}catch{return null;}})();
 
 function entry(e){

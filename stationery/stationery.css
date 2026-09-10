@@ -76,7 +76,7 @@ input,textarea{font:inherit;padding:7px 9px;border:1px solid var(--line);border-
    both and right-aligns, so an all-Latin table reads as the proof's. */
 .mk-tall .mk-names{position:absolute;left:8%;right:11%;bottom:7%;max-height:36%;overflow:hidden;
   display:grid;grid-template-columns:auto auto;column-gap:.7em;justify-content:end;align-content:end;
-  text-transform:uppercase;letter-spacing:.1em;font-size:var(--names,5.5px);line-height:1.5;}
+  text-transform:uppercase;letter-spacing:.1em;font-size:var(--names,4.5px);line-height:1.5;}
 .mk-entry{display:contents;}
 /* One central gutter: characters end at it, romanisation starts from it,
    block packed to the right. A Latin name spans both, at the right. */

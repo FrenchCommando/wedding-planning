@@ -2,7 +2,7 @@
    of the 12×17 sheet, so what the screen shows is what comes off the
    printer; the screen just adds a grey ground and a toolbar. The palette
    is the suite's, fixed — this is paper, not a page that follows the OS. */
-:root{--paper:#f2e7dc;--ink:#7a1f2b;--names:.42cm;}
+:root{--paper:#f2e7dc;--ink:#7a1f2b;--names:.32cm;}
 *{box-sizing:border-box;}
 body{margin:0;background:#3a3532;color:#e9e2d6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;}
 .bar{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:#26221f;border-bottom:1px solid #4a433d;}
