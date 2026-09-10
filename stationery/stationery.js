@@ -251,8 +251,20 @@ function fitPlanCards(box){
 // Two cards, because the two cases look different on paper: a table of
 // individually named guests, and one with Chinese households carrying a
 // count. Showing only the first table hides the case worth checking.
+// The Chinese card is the one whose names differ most in length — a
+// two-character 张伟 next to a four-character 欧阳向上 is what shows the
+// gutter doing anything; a table of uniform three-character names looks
+// like a plain column. A multi-person household breaks ties.
 function mockPlanDeTable(s,t){
-  const chinese=s.tables.find(x=>x!==t&&collapseHousehold(seatedNames(s,x)).some(e=>e.count>1&&/[一-鿿]/.test(e.name)));
+  let chinese=null, best=-1;
+  for(const x of s.tables){
+    if(x===t)continue;
+    const cjk=collapseHousehold(seatedNames(s,x)).filter(e=>/[一-鿿]/.test(e.name));
+    if(!cjk.length)continue;
+    const lens=cjk.map(e=>cardName(e.name).length);
+    const score=(Math.max(...lens)-Math.min(...lens))*2+(cjk.some(e=>e.count>1)?1:0);
+    if(score>best){best=score;chinese=x;}
+  }
   return `<div class="mocks">${planCard(s,t)}${chinese?planCard(s,chinese):""}</div>${planTools()}`;
 }
 /* Left to itself the card wraps wherever it runs out of width, which lands
