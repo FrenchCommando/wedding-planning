@@ -33,15 +33,18 @@ body{margin:0;background:#3a3532;color:#e9e2d6;font-family:-apple-system,BlinkMa
    names, starting from it. A Latin name spans both columns and
    right-aligns, so an all-Latin table reads exactly as the proof's. */
 .names{position:absolute;left:1cm;right:1.3cm;bottom:1.1cm;max-height:7.2cm;overflow:hidden;
-  display:grid;grid-template-columns:auto auto;column-gap:.35cm;justify-content:end;align-content:end;
+  display:grid;grid-template-columns:auto auto;column-gap:.35cm;justify-content:space-between;align-content:end;
   text-transform:uppercase;letter-spacing:.14em;font-weight:500;font-size:var(--names);line-height:1.45;}
 .entry{display:contents;}
+/* Both columns ragged-left, right-aligned: the characters end at their
+   column's edge, the romanisation at the card's, the gap between fixed.
+   A Latin name spans both columns and sits at the right. */
 .main{text-align:right;white-space:nowrap;}
-.entry.lat .main{grid-column:1/-1;}
+.entry.lat .main{grid-column:1/-1;text-align:right;}
 /* The characters sit in a serif that has them, a touch larger than the
    capitals so the two scripts read at the same weight. */
 .entry.cjk .main{font-family:"Noto Serif SC","Songti SC","STSong",SimSun,serif;font-size:1.12em;letter-spacing:.08em;text-transform:none;}
-.rom{text-align:left;white-space:nowrap;letter-spacing:.16em;}
+.rom{text-align:right;white-space:nowrap;letter-spacing:.16em;}
 
 @page{size:12cm 17cm;margin:0;}
 @media print{

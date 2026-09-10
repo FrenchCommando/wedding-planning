@@ -49,7 +49,7 @@ function fit(){
     // end, so a too-wide one spills off the left, which scrollWidth
     // doesn't count; the first cell's edge against the box's is the test.
     const tooWide=()=>{const m=names.querySelector(".main");return !!m&&m.getBoundingClientRect().left<names.getBoundingClientRect().left-0.5;};
-    while(size>NAMES_MIN&&(names.scrollHeight>names.clientHeight+1||tooWide())){
+    while(size>NAMES_MIN&&(names.scrollHeight>names.clientHeight+1||names.scrollWidth>names.clientWidth+1||tooWide())){
       size=Math.round((size-STEP)*100)/100;
       c.style.setProperty("--names",size+"cm");
     }
