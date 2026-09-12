@@ -1,0 +1,82 @@
+:root{
+  color-scheme:light dark;
+  --bg:#f6f1e7; --panel:#fffdf8; --ink:#2b2620; --muted:#8a8071;
+  --line:#e2d8c3; --accent:#a9744f; --accent-ink:#fff; --danger:#b2483c; --ok:#4f7a4a;
+  --shadow:0 1px 2px rgba(60,45,20,.05),0 10px 30px rgba(60,45,20,.08);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#1b1712; --panel:#26221b; --ink:#efe9dc; --muted:#a39a87;
+    --line:#3a3428; --accent:#c99361; --accent-ink:#20160c; --danger:#e0685c; --ok:#8fbf88;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:40px 20px 80px;background:var(--bg);color:var(--ink);}
+h1{text-align:center;font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-weight:400;font-size:28px;margin:0 0 4px;}
+.sub{text-align:center;color:var(--muted);margin-bottom:36px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
+.topbar{display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:0 auto 28px;}
+.topbar a{color:var(--muted);text-decoration:none;font-size:13px;}
+button{padding:7px 14px;border:none;border-radius:6px;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:600;cursor:pointer;}
+button.secondary{background:transparent;color:inherit;border:1px solid var(--line);font-weight:400;}
+button.danger{background:var(--danger);color:#fff;}
+input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);}
+
+.wrap{max-width:760px;margin:0 auto;}
+
+/* Order totals across the top: headcount, bottles, cost, cost per head.
+   Only Chosen/Ordered/Delivered rows count — candidates don't add up. */
+.summary{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px;}
+.summary .stat{flex:1 1 140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);}
+.summary .stat .n{font-size:22px;font-family:Georgia,"Iowan Old Style","Times New Roman",serif;}
+.summary .stat .l{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.summary .stat .note{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;}
+
+.section{margin-bottom:28px;}
+.section h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:600;}
+.section h2 .tot{float:right;letter-spacing:0;text-transform:none;font-weight:400;}
+
+.itemRow{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline;}
+.itemRow:last-child{border-bottom:0;}
+.itemRow .main{flex:1;min-width:0;}
+.itemRow .name{font-weight:600;}
+.itemRow .meta{color:var(--muted);font-size:12px;margin-top:2px;}
+.itemRow .notes{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap;}
+.itemRow .qty{flex:none;text-align:right;font-size:13px;white-space:nowrap;}
+.itemRow .qty .cost{color:var(--muted);font-size:12px;display:block;}
+/* Suggested quantity from the headcount estimate; red when the typed order
+   is under it, so a short order stands out without a second glance. */
+.itemRow .qty .sugg{color:var(--muted);font-size:11px;display:block;}
+.itemRow .qty .sugg.short{color:var(--danger);}
+.itemRow.dropped{opacity:.45;}
+.itemRow.dropped .name{text-decoration:line-through;}
+
+.pill{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;flex:none;}
+.pill.chosen{border-color:var(--accent);color:var(--accent);}
+.pill.ordered,.pill.delivered{border-color:var(--ok);color:var(--ok);}
+.pill.dropped{border-color:var(--danger);color:var(--danger);}
+
+.editRow{display:flex;gap:8px;padding:8px 0;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);}
+.editRow:last-child{border-bottom:0;}
+.editRow input{flex:1;min-width:110px;}
+.editRow .num-input{width:76px;flex:none;min-width:0;}
+.editRow select{flex:none;}
+.editRow textarea{flex:1 1 100%;resize:vertical;min-height:36px;}
+.editRow label.f{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap;}
+.editRow button{flex:none;padding:5px 9px;}
+.editRow .name-input{flex:2 1 200px;}
+#headcountEdit .editRow{border-bottom:0;margin-bottom:16px;}
+.addBar{margin-top:14px;}
+
+.empty{color:var(--muted);font-size:13px;padding:8px 0;}
+#err{color:var(--danger);text-align:center;margin-bottom:20px;}
+
+.overlay{position:fixed;inset:0;background:rgba(20,16,10,.5);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:6vh 20px;}
+.overlay[hidden]{display:none;}
+.overlay-card{background:var(--panel);max-width:520px;width:100%;max-height:88vh;overflow:auto;border-radius:14px;box-shadow:var(--shadow);padding:20px 24px 24px;}
+.overlay-card h2{margin:0 0 4px;font-size:18px;}
+.overlay-card .lead{color:var(--muted);margin:0 0 12px;font-size:13px;}
+.overlay-close{float:right;border:1px solid var(--line);background:transparent;border-radius:8px;width:28px;height:28px;padding:0;cursor:pointer;font-size:15px;line-height:1;}
+.hist-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);}
+.hist-row:last-child{border-bottom:0;}
+.hist-when{flex:1;font-size:13px;}

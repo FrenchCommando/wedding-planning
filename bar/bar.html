@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bar</title>
+<link rel="stylesheet" href="bar.css">
+</head>
+<body>
+<div class="topbar">
+  <a href="/">&larr; Home</a>
+  <span id="roleTag" style="font-size:12px;opacity:.6"></span>
+  <span id="editControls" style="display:none"><button class="secondary" id="editToggle" title="Shift+click Save to pin this save as a milestone">Edit</button></span>
+  <button class="secondary" id="historyBtn" style="display:none">History</button>
+</div>
+<h1>Bar</h1>
+<div class="sub" id="subTitle"></div>
+<div id="err"></div>
+
+<div class="wrap">
+  <div class="summary" id="summary"></div>
+  <div id="headcountEdit"></div>
+  <div id="itemBox"></div>
+  <div class="addBar" id="addBar" style="display:none">
+    <button class="secondary" id="addItem">+ Add a bottle</button>
+  </div>
+</div>
+
+<div class="overlay" id="history" hidden>
+  <div class="overlay-card">
+    <button class="overlay-close" id="historyClose" title="Close">×</button>
+    <h2>Past saves</h2>
+    <p class="lead">Each save keeps a Drive revision. Pick one to see what changed since then. Regular saves can age out of Drive's history over time; 📌 saves are kept forever.</p>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script src="bar.js"></script>
+</body>
+</html>
