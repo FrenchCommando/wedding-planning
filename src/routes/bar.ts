@@ -19,6 +19,11 @@ const DEFAULT_STATE = {
   // call, not a guest count.
   guestCount: 0,
   guestCountNote: "",
+  // When the order arrives at the venue, shown across the top of the
+  // board. Free text ("10 AM", "Friday 10:00"), with a note for where and
+  // who signs for it.
+  deliveryTime: "",
+  deliveryNote: "",
   items: [] as {
     id: number;
     name: string;

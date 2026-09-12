@@ -25,5 +25,7 @@ export const barDiffConfig: DiffConfig = {
       message: (before, after) => `Drinking headcount: ${before ?? 0} → ${after ?? 0}`,
     },
     guestCountNote: { label: "Headcount note" },
+    deliveryTime: { label: "Delivery time" },
+    deliveryNote: { label: "Delivery note" },
   },
 };

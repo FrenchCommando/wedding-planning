@@ -56,6 +56,13 @@ function suggested(it){
   return Math.ceil(g*per/spu);
 }
 
+function renderDelivery(){
+  const box=document.getElementById("delivery");
+  if(!data.deliveryTime&&!data.deliveryNote){box.innerHTML="";return;}
+  box.innerHTML=`🚚 Delivery ${esc(data.deliveryTime||"")}`+
+    (data.deliveryNote?`<span class="note">${esc(data.deliveryNote)}</span>`:"");
+}
+
 function renderSummary(){
   const box=document.getElementById("summary");
   const inOrder=data.items.filter(counted);
@@ -86,6 +93,7 @@ function tile(it){
 }
 
 function renderView(){
+  renderDelivery();
   renderSummary();
   document.getElementById("headcountEdit").innerHTML="";
   const box=document.getElementById("itemBox");
@@ -103,12 +111,19 @@ function renderView(){
 }
 
 function renderEdit(){
+  renderDelivery();
   renderSummary();
   document.getElementById("headcountEdit").innerHTML=`
+    <div class="editRow">
+      <label class="f">🚚 Delivery <input id="deliveryTime" value="${esc(data.deliveryTime||"")}" placeholder="10 AM" style="max-width:110px"></label>
+      <input id="deliveryNote" value="${esc(data.deliveryNote||"")}" placeholder="Where, who receives it" style="max-width:360px">
+    </div>
     <div class="editRow">
       <label class="f">Drinking headcount <input class="num-input" id="guestCount" type="number" min="0" value="${Number(data.guestCount)||0}"></label>
       <input id="guestCountNote" value="${esc(data.guestCountNote||"")}" placeholder="How that number was arrived at" style="max-width:360px">
     </div>`;
+  document.getElementById("deliveryTime").addEventListener("input",e=>{data.deliveryTime=e.target.value;renderDelivery();});
+  document.getElementById("deliveryNote").addEventListener("input",e=>{data.deliveryNote=e.target.value;renderDelivery();});
   document.getElementById("guestCount").addEventListener("input",e=>{data.guestCount=Number(e.target.value)||0;renderSummary();});
   document.getElementById("guestCountNote").addEventListener("input",e=>{data.guestCountNote=e.target.value;renderSummary();});
 
