@@ -14,16 +14,20 @@ import { diffData, type DiffConfig } from "./data-diff.js";
  */
 export function mountRevisionRoutes(
   router: Router,
-  opts: { path: string; fileName: string; defaultState: unknown; diffConfig: DiffConfig }
+  opts: { path: string; fileName: string; defaultState: unknown; diffConfig: DiffConfig; roles?: Parameters<typeof requireRole> }
 ): void {
   const { path, fileName, defaultState, diffConfig } = opts;
+  // A diff spells out record labels, so a file whose GET strips part of the
+  // data for some role (transportation's rider names, for guests) narrows
+  // these to the roles that see the whole file.
+  const roles = opts.roles ?? ["editor", "vendor", "guest"];
 
-  router.get(`${path}/revisions`, requireRole("editor", "vendor", "guest"), asyncRoute(async (_req, res) => {
+  router.get(`${path}/revisions`, requireRole(...roles), asyncRoute(async (_req, res) => {
     const revisions = await listRevisions(fileName);
     res.json({ revisions });
   }));
 
-  router.get(`${path}/revisions/:id/diff`, requireRole("editor", "vendor", "guest"), asyncRoute(async (req, res) => {
+  router.get(`${path}/revisions/:id/diff`, requireRole(...roles), asyncRoute(async (req, res) => {
     let past;
     try {
       past = await getRevision(fileName, req.params.id);

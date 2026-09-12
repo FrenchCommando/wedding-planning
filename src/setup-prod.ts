@@ -38,6 +38,8 @@ async function main() {
   await readJsonFile("speeches.json", { speeches: [], nextId: 1 });
   await readJsonFile("script.json", { sections: [], nextId: 1 });
   await readJsonFile("stationery.json", { items: [], nextId: 1 });
+  await readJsonFile("transportation.json", { shuttles: [], riders: [], extraCount: 0, extraCountNote: "", nextId: 1 });
+  await readJsonFile("bar.json", { guestCount: 0, guestCountNote: "", items: [], nextId: 1 });
 
   console.log("Drive data folder and files ready.");
 }

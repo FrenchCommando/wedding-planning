@@ -1,0 +1,15 @@
+{
+  "shuttles": [
+    { "id": 1, "time": "2:00 PM", "direction": "toVenue", "from": "Hotel Test, lobby", "to": "Venue", "capacity": 50, "notes": "Coach 1" },
+    { "id": 2, "time": "2:15 PM", "direction": "toVenue", "from": "Gare de Test", "to": "Venue", "capacity": 20, "notes": "" },
+    { "id": 3, "time": "1:00 AM", "direction": "back", "from": "Venue", "to": "Hotel Test", "capacity": 50, "notes": "Last coach" }
+  ],
+  "riders": [
+    { "id": 4, "name": "Alice Test", "household": "Alice Test", "toVenue": true, "back": true, "notes": "" },
+    { "id": 5, "name": "Bob Test", "household": "Alice Test", "toVenue": true, "back": true, "notes": "" },
+    { "id": 6, "name": "Carol Test", "household": "Carol Test", "toVenue": false, "back": true, "notes": "Driving in" }
+  ],
+  "extraCount": 4,
+  "extraCountNote": "Test group, headcount only",
+  "nextId": 7
+}

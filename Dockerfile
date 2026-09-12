@@ -20,6 +20,8 @@ COPY welcome-drinks ./welcome-drinks
 COPY sunday-brunch ./sunday-brunch
 COPY playlist ./playlist
 COPY stationery ./stationery
+COPY transportation ./transportation
+COPY bar ./bar
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]

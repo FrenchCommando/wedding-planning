@@ -12,6 +12,8 @@ import playlistRouter from "./routes/playlist.js";
 import speechesRouter from "./routes/speeches.js";
 import scriptRouter from "./routes/script.js";
 import stationeryRouter from "./routes/stationery.js";
+import transportationRouter from "./routes/transportation.js";
+import barRouter from "./routes/bar.js";
 
 const app = express();
 
@@ -29,6 +31,8 @@ app.use("/api", playlistRouter);
 app.use("/api", speechesRouter);
 app.use("/api", scriptRouter);
 app.use("/api", stationeryRouter);
+app.use("/api", transportationRouter);
+app.use("/api", barRouter);
 
 app.get("/api/whoami", (req, res) => {
   res.json({ session: req.session ?? null });
@@ -56,6 +60,8 @@ app.use("/welcome-drinks", express.static("welcome-drinks"));
 app.use("/sunday-brunch", express.static("sunday-brunch"));
 app.use("/playlist", express.static("playlist"));
 app.use("/stationery", express.static("stationery"));
+app.use("/transportation", express.static("transportation"));
+app.use("/bar", express.static("bar"));
 
 // Catch-all error handler — must be last, and must take 4 params (that's
 // what makes Express treat it as an error middleware rather than a normal

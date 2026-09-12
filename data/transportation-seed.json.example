@@ -1,0 +1,12 @@
+{
+  "shuttles": [
+    { "id": 1, "time": "2:00 PM", "direction": "toVenue", "from": "Hotel, lobby", "to": "Venue", "capacity": 50, "notes": "" },
+    { "id": 2, "time": "1:00 AM", "direction": "back", "from": "Venue", "to": "Hotel", "capacity": 50, "notes": "" }
+  ],
+  "riders": [
+    { "id": 3, "name": "Jane Doe", "household": "Doe Family", "toVenue": true, "back": true, "notes": "" }
+  ],
+  "extraCount": 0,
+  "extraCountNote": "",
+  "nextId": 4
+}
