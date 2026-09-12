@@ -24,28 +24,31 @@ button.secondary{background:transparent;color:inherit;border:1px solid var(--lin
 button.danger{background:var(--danger);color:#fff;}
 input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);}
 
-.wrap{max-width:820px;margin:0 auto;}
+.wrap{max-width:1400px;margin:0 auto;}
 
 /* One line of totals, no money: who's drinking and how much is in the order. */
 .summary{text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px;}
 .summary .note{font-style:italic;display:block;font-size:12px;margin-top:2px;}
 
-.section{margin-bottom:26px;}
-.section h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600;}
+/* Transposed: one column per category across the page, bottles stacked
+   under each heading, so the whole order fits one screen height on a
+   laptop. Narrow screens scroll sideways rather than stacking columns. */
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(130px,1fr);gap:14px;overflow-x:auto;padding-bottom:8px;}
+.section h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600;text-align:center;}
+.tiles{display:flex;flex-direction:column;gap:8px;}
 
-/* Tiles: big emoji, the name, a quantity badge. Status is carried by the
+/* Tiles: emoji, the name, a quantity badge. Status is carried by the
    tint (chosen: warm; ordered/delivered: green; dropped: faded) rather than
-   a label, so the wall reads at a glance. */
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
-.tile{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 12px 12px;text-align:center;box-shadow:var(--shadow);}
-.tile .emoji{font-size:40px;line-height:1;margin-bottom:8px;}
-.tile .name{font-size:13px;font-weight:600;line-height:1.25;}
-.tile .when{font-size:11px;color:var(--muted);margin-top:3px;}
-.tile .qty{position:absolute;top:8px;right:8px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--line);}
+   a label, so the board reads at a glance. */
+.tile{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 8px 8px;text-align:center;box-shadow:var(--shadow);}
+.tile .emoji{font-size:30px;line-height:1;margin-bottom:5px;}
+.tile .name{font-size:12px;font-weight:600;line-height:1.2;}
+.tile .when{font-size:10px;color:var(--muted);margin-top:2px;}
+.tile .qty{position:absolute;top:5px;right:5px;font-size:11px;font-weight:600;padding:1px 6px;border-radius:10px;background:var(--bg);border:1px solid var(--line);}
 .tile .qty.short{color:var(--danger);border-color:var(--danger);}
 .tile.chosen{background:var(--chosen-bg);border-color:var(--accent);}
 .tile.ordered,.tile.delivered{background:var(--ok-bg);border-color:var(--ok);}
-.tile.delivered .emoji::after{content:"✓";position:absolute;font-size:14px;margin-left:-6px;margin-top:26px;color:var(--ok);font-weight:700;}
+.tile.delivered .emoji::after{content:"✓";position:absolute;font-size:12px;margin-left:-5px;margin-top:20px;color:var(--ok);font-weight:700;}
 .tile.dropped{opacity:.35;}
 .tile.dropped .name{text-decoration:line-through;}
 .tile.shortlisted{border-style:dashed;}

@@ -93,11 +93,11 @@ function renderView(){
   else{
     // Grouped by category in pouring order; a category that isn't in the
     // list (older data, a typo) lands under Other rather than vanishing.
-    box.innerHTML=CATEGORIES.map(cat=>{
+    box.innerHTML='<div class="board">'+CATEGORIES.map(cat=>{
       const rows=data.items.filter(it=>(CATEGORIES.includes(it.category)?it.category:"Other")===cat);
       if(!rows.length)return "";
       return `<div class="section"><h2>${esc(cat)}</h2><div class="tiles">${rows.map(tile).join("")}</div></div>`;
-    }).join("");
+    }).join("")+'</div>';
   }
   document.getElementById("addBar").style.display="none";
 }
