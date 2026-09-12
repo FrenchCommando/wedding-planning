@@ -12,12 +12,16 @@ async function promptForLogin(){
 }
 function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+", "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
-function money(n){return "€"+(Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2});}
 
-// Groups the rows on the page, in pouring order.
-const CATEGORIES=["Champagne & sparkling","White wine","Rosé","Red wine","Beer","Spirits","Soft drinks & mixers","Other"];
-// Considering is the default and renders no pill; only the last three
-// count toward the order totals.
+// Groups the tiles on the page, in pouring order, each with the emoji a
+// tile shows unless the row carries its own.
+const CATEGORY_EMOJI={
+  "Champagne & sparkling":"🍾","White wine":"🥂","Rosé":"🌸","Red wine":"🍷",
+  "Beer":"🍺","Spirits":"🥃","Soft drinks & mixers":"🥤","Other":"🧊",
+};
+const CATEGORIES=Object.keys(CATEGORY_EMOJI);
+function emojiFor(it){return it.emoji||CATEGORY_EMOJI[it.category]||CATEGORY_EMOJI.Other;}
+// Considering is the default; only the last three count as "in the order".
 const STATUSES=["Considering","Shortlisted","Chosen","Ordered","Delivered","Dropped"];
 const COUNTED=new Set(["Chosen","Ordered","Delivered"]);
 
@@ -44,7 +48,6 @@ async function loadData(){
 }
 
 function counted(it){return COUNTED.has(it.status);}
-function lineCost(it){return (Number(it.quantity)||0)*(Number(it.unitPrice)||0);}
 // Suggested units from the headcount: guests × glasses each ÷ glasses per
 // unit, rounded up. Null when any input is missing, so nothing is shown.
 function suggested(it){
@@ -57,31 +60,28 @@ function renderSummary(){
   const box=document.getElementById("summary");
   const inOrder=data.items.filter(counted);
   const units=inOrder.reduce((n,it)=>n+(Number(it.quantity)||0),0);
-  const cost=inOrder.reduce((n,it)=>n+lineCost(it),0);
   const g=Number(data.guestCount)||0;
-  box.innerHTML=`
-    <div class="stat"><div class="n">${g||"—"}</div><div class="l">Drinking</div>${data.guestCountNote?`<div class="note">${esc(data.guestCountNote)}</div>`:""}</div>
-    <div class="stat"><div class="n">${units}</div><div class="l">Units in the order</div></div>
-    <div class="stat"><div class="n">${money(cost)}</div><div class="l">Order total</div></div>
-    <div class="stat"><div class="n">${g?money(cost/g):"—"}</div><div class="l">Per head</div></div>`;
+  box.innerHTML=`${g||"?"} drinking · ${inOrder.length} chosen · ${units} bottles in the order`+
+    (data.guestCountNote?`<span class="note">${esc(data.guestCountNote)}</span>`:"");
 }
 
-function itemRow(it){
-  const meta=[it.moment,it.supplier].filter(Boolean).join(" · ");
-  const status=it.status&&it.status!=="Considering"?`<span class="pill ${esc(it.status.toLowerCase())}">${esc(it.status)}</span>`:"";
-  const qty=Number(it.quantity)?`${it.quantity} × ${esc(it.unit||"bottle")}`:"";
-  const price=Number(it.unitPrice)?`<span class="cost">${money(it.unitPrice)} each${Number(it.quantity)?" · "+money(lineCost(it)):""}</span>`:"";
+// A tile: emoji, name, when it's poured, and the quantity as a badge. The
+// hover title carries the rest (status, supplier, notes, suggested
+// quantity) so it's there without cluttering the wall. The badge goes red
+// when the typed quantity is under the headcount estimate.
+function tile(it){
   const sugg=suggested(it);
-  const suggHtml=sugg!=null?`<span class="sugg${(Number(it.quantity)||0)<sugg?" short":""}">≈ ${sugg} suggested</span>`:"";
+  const q=Number(it.quantity)||0;
+  const short=sugg!=null&&q<sugg;
+  const title=[it.status||"Considering",it.supplier,sugg!=null?`≈ ${sugg} suggested`:"",it.notes].filter(Boolean).join("\n");
+  const cls=(it.status||"Considering").toLowerCase();
+  const unit=it.unit&&!/bottle/i.test(it.unit)?" "+esc(it.unit):"";
   return `
-    <div class="itemRow${it.status==="Dropped"?" dropped":""}">
-      <div class="main">
-        <div class="name">${esc(it.name)||"(unnamed)"}</div>
-        ${meta?`<div class="meta">${esc(meta)}</div>`:""}
-        ${it.notes?`<div class="notes">${esc(it.notes)}</div>`:""}
-      </div>
-      ${status}
-      <div class="qty">${qty}${price}${suggHtml}</div>
+    <div class="tile ${esc(cls)}" title="${esc(title)}">
+      ${q?`<span class="qty${short?" short":""}">${q}${unit}</span>`:""}
+      <div class="emoji">${esc(emojiFor(it))}</div>
+      <div class="name">${esc(it.name)||"(unnamed)"}</div>
+      ${it.moment?`<div class="when">${esc(it.moment)}</div>`:""}
     </div>`;
 }
 
@@ -96,8 +96,7 @@ function renderView(){
     box.innerHTML=CATEGORIES.map(cat=>{
       const rows=data.items.filter(it=>(CATEGORIES.includes(it.category)?it.category:"Other")===cat);
       if(!rows.length)return "";
-      const cost=rows.filter(counted).reduce((n,it)=>n+lineCost(it),0);
-      return `<div class="section"><h2>${esc(cat)}${cost?`<span class="tot">${money(cost)}</span>`:""}</h2>${rows.map(itemRow).join("")}</div>`;
+      return `<div class="section"><h2>${esc(cat)}</h2><div class="tiles">${rows.map(tile).join("")}</div></div>`;
     }).join("");
   }
   document.getElementById("addBar").style.display="none";
@@ -108,7 +107,7 @@ function renderEdit(){
   document.getElementById("headcountEdit").innerHTML=`
     <div class="editRow">
       <label class="f">Drinking headcount <input class="num-input" id="guestCount" type="number" min="0" value="${Number(data.guestCount)||0}"></label>
-      <input id="guestCountNote" value="${esc(data.guestCountNote||"")}" placeholder="How that number was arrived at">
+      <input id="guestCountNote" value="${esc(data.guestCountNote||"")}" placeholder="How that number was arrived at" style="max-width:360px">
     </div>`;
   document.getElementById("guestCount").addEventListener("input",e=>{data.guestCount=Number(e.target.value)||0;renderSummary();});
   document.getElementById("guestCountNote").addEventListener("input",e=>{data.guestCountNote=e.target.value;renderSummary();});
@@ -116,18 +115,20 @@ function renderEdit(){
   const box=document.getElementById("itemBox");
   box.innerHTML=data.items.map((it,i)=>`
     <div class="editRow" data-i="${i}">
-      <input class="name-input" data-field="name" value="${esc(it.name)}" placeholder="Name (producer, cuvée, vintage)">
+      <input class="emoji-input" data-field="emoji" value="${esc(it.emoji||"")}" placeholder="${esc(CATEGORY_EMOJI[it.category]||CATEGORY_EMOJI.Other)}" title="Emoji for the tile; blank uses the category's">
+      <input class="name-input" data-field="name" value="${esc(it.name)}" placeholder="Name">
       <select data-field="category">${CATEGORIES.map(c=>`<option${it.category===c?" selected":""}>${c}</option>`).join("")}</select>
       <select data-field="status">${STATUSES.map(s=>`<option${(it.status||"Considering")===s?" selected":""}>${s}</option>`).join("")}</select>
-      <input data-field="moment" value="${esc(it.moment||"")}" placeholder="When (cocktail hour, dinner, party)">
-      <input data-field="supplier" value="${esc(it.supplier||"")}" placeholder="Supplier">
       <label class="f">Qty <input class="num-input" data-field="quantity" type="number" min="0" value="${it.quantity??""}"></label>
-      <input data-field="unit" value="${esc(it.unit||"")}" placeholder="Unit (75cl bottle, magnum, keg)" style="min-width:90px">
-      <label class="f">€/unit <input class="num-input" data-field="unitPrice" type="number" min="0" step="0.01" value="${it.unitPrice??""}"></label>
-      <label class="f">Glasses/unit <input class="num-input" data-field="servingsPerUnit" type="number" min="0" step="0.5" value="${it.servingsPerUnit??""}"></label>
-      <label class="f">Glasses/guest <input class="num-input" data-field="perGuest" type="number" min="0" step="0.1" value="${it.perGuest??""}"></label>
-      <textarea data-field="notes" placeholder="Notes (tasting verdict, what the caterer said, delivery, corkage)">${esc(it.notes||"")}</textarea>
       <button class="danger" data-action="remove">×</button>
+      <div class="more">
+        <input data-field="moment" value="${esc(it.moment||"")}" placeholder="When (cocktail hour, dinner, party)">
+        <input data-field="unit" value="${esc(it.unit||"")}" placeholder="Unit (bottle, keg, case)" style="max-width:150px">
+        <input data-field="supplier" value="${esc(it.supplier||"")}" placeholder="Supplier" style="max-width:150px">
+        <label class="f">Glasses/unit <input class="num-input" data-field="servingsPerUnit" type="number" min="0" step="0.5" value="${it.servingsPerUnit??""}"></label>
+        <label class="f">Glasses/guest <input class="num-input" data-field="perGuest" type="number" min="0" step="0.1" value="${it.perGuest??""}"></label>
+        <input data-field="notes" value="${esc(it.notes||"")}" placeholder="Notes">
+      </div>
     </div>
   `).join("");
   box.querySelectorAll(".editRow").forEach(row=>{

@@ -2,12 +2,14 @@
   color-scheme:light dark;
   --bg:#f6f1e7; --panel:#fffdf8; --ink:#2b2620; --muted:#8a8071;
   --line:#e2d8c3; --accent:#a9744f; --accent-ink:#fff; --danger:#b2483c; --ok:#4f7a4a;
+  --chosen-bg:#f3e6d6; --ok-bg:#e4efe0;
   --shadow:0 1px 2px rgba(60,45,20,.05),0 10px 30px rgba(60,45,20,.08);
 }
 @media (prefers-color-scheme:dark){
   :root{
     --bg:#1b1712; --panel:#26221b; --ink:#efe9dc; --muted:#a39a87;
     --line:#3a3428; --accent:#c99361; --accent-ink:#20160c; --danger:#e0685c; --ok:#8fbf88;
+    --chosen-bg:#3a2d20; --ok-bg:#243325;
     --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.4);
   }
 }
@@ -15,60 +17,56 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;padding:40px 20px 80px;background:var(--bg);color:var(--ink);}
 h1{text-align:center;font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-weight:400;font-size:28px;margin:0 0 4px;}
 .sub{text-align:center;color:var(--muted);margin-bottom:36px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;}
-.topbar{display:flex;justify-content:space-between;align-items:center;max-width:760px;margin:0 auto 28px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;max-width:820px;margin:0 auto 28px;}
 .topbar a{color:var(--muted);text-decoration:none;font-size:13px;}
 button{padding:7px 14px;border:none;border-radius:6px;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:600;cursor:pointer;}
 button.secondary{background:transparent;color:inherit;border:1px solid var(--line);font-weight:400;}
 button.danger{background:var(--danger);color:#fff;}
 input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);}
 
-.wrap{max-width:760px;margin:0 auto;}
+.wrap{max-width:820px;margin:0 auto;}
 
-/* Order totals across the top: headcount, bottles, cost, cost per head.
-   Only Chosen/Ordered/Delivered rows count — candidates don't add up. */
-.summary{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px;}
-.summary .stat{flex:1 1 140px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow);}
-.summary .stat .n{font-size:22px;font-family:Georgia,"Iowan Old Style","Times New Roman",serif;}
-.summary .stat .l{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px;}
-.summary .stat .note{font-size:12px;color:var(--muted);margin-top:4px;font-style:italic;}
+/* One line of totals, no money: who's drinking and how much is in the order. */
+.summary{text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px;}
+.summary .note{font-style:italic;display:block;font-size:12px;margin-top:2px;}
 
-.section{margin-bottom:28px;}
-.section h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:600;}
-.section h2 .tot{float:right;letter-spacing:0;text-transform:none;font-weight:400;}
+.section{margin-bottom:26px;}
+.section h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px;font-weight:600;}
 
-.itemRow{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);align-items:baseline;}
-.itemRow:last-child{border-bottom:0;}
-.itemRow .main{flex:1;min-width:0;}
-.itemRow .name{font-weight:600;}
-.itemRow .meta{color:var(--muted);font-size:12px;margin-top:2px;}
-.itemRow .notes{color:var(--muted);font-size:13px;margin-top:3px;white-space:pre-wrap;}
-.itemRow .qty{flex:none;text-align:right;font-size:13px;white-space:nowrap;}
-.itemRow .qty .cost{color:var(--muted);font-size:12px;display:block;}
-/* Suggested quantity from the headcount estimate; red when the typed order
-   is under it, so a short order stands out without a second glance. */
-.itemRow .qty .sugg{color:var(--muted);font-size:11px;display:block;}
-.itemRow .qty .sugg.short{color:var(--danger);}
-.itemRow.dropped{opacity:.45;}
-.itemRow.dropped .name{text-decoration:line-through;}
+/* Tiles: big emoji, the name, a quantity badge. Status is carried by the
+   tint (chosen: warm; ordered/delivered: green; dropped: faded) rather than
+   a label, so the wall reads at a glance. */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.tile{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 12px 12px;text-align:center;box-shadow:var(--shadow);}
+.tile .emoji{font-size:40px;line-height:1;margin-bottom:8px;}
+.tile .name{font-size:13px;font-weight:600;line-height:1.25;}
+.tile .when{font-size:11px;color:var(--muted);margin-top:3px;}
+.tile .qty{position:absolute;top:8px;right:8px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--line);}
+.tile .qty.short{color:var(--danger);border-color:var(--danger);}
+.tile.chosen{background:var(--chosen-bg);border-color:var(--accent);}
+.tile.ordered,.tile.delivered{background:var(--ok-bg);border-color:var(--ok);}
+.tile.delivered .emoji::after{content:"✓";position:absolute;font-size:14px;margin-left:-6px;margin-top:26px;color:var(--ok);font-weight:700;}
+.tile.dropped{opacity:.35;}
+.tile.dropped .name{text-decoration:line-through;}
+.tile.shortlisted{border-style:dashed;}
 
-.pill{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;flex:none;}
-.pill.chosen{border-color:var(--accent);color:var(--accent);}
-.pill.ordered,.pill.delivered{border-color:var(--ok);color:var(--ok);}
-.pill.dropped{border-color:var(--danger);color:var(--danger);}
-
+/* Edit mode: one compact line per bottle, details folded onto a second
+   line so the list stays scannable. */
 .editRow{display:flex;gap:8px;padding:8px 0;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);}
 .editRow:last-child{border-bottom:0;}
 .editRow input{flex:1;min-width:110px;}
-.editRow .num-input{width:76px;flex:none;min-width:0;}
+.editRow .emoji-input{width:52px;flex:none;min-width:0;text-align:center;font-size:20px;padding:3px;}
+.editRow .num-input{width:70px;flex:none;min-width:0;}
 .editRow select{flex:none;}
-.editRow textarea{flex:1 1 100%;resize:vertical;min-height:36px;}
+.editRow .name-input{flex:2 1 180px;}
+.editRow .more{flex:1 1 100%;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.editRow .more input{font-size:12px;padding:5px 8px;}
 .editRow label.f{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);white-space:nowrap;}
 .editRow button{flex:none;padding:5px 9px;}
-.editRow .name-input{flex:2 1 200px;}
-#headcountEdit .editRow{border-bottom:0;margin-bottom:16px;}
+#headcountEdit .editRow{border-bottom:0;margin-bottom:16px;justify-content:center;}
 .addBar{margin-top:14px;}
 
-.empty{color:var(--muted);font-size:13px;padding:8px 0;}
+.empty{color:var(--muted);font-size:13px;padding:8px 0;text-align:center;}
 #err{color:var(--danger);text-align:center;margin-bottom:20px;}
 
 .overlay{position:fixed;inset:0;background:rgba(20,16,10,.5);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:6vh 20px;}

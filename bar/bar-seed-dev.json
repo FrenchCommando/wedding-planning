@@ -2,12 +2,12 @@
   "guestCount": 120,
   "guestCountNote": "Test: adults minus the drivers",
   "items": [
-    { "id": 1, "name": "Test Champagne Brut NV", "category": "Champagne & sparkling", "moment": "Cocktail hour + toast", "status": "Ordered", "quantity": 40, "unit": "75cl bottle", "unitPrice": 24, "supplier": "Cave Test", "servingsPerUnit": 6, "perGuest": 2, "notes": "Tasted 2026-05, everyone liked it." },
-    { "id": 2, "name": "Test Crémant de Loire", "category": "Champagne & sparkling", "moment": "Cocktail hour", "status": "Dropped", "quantity": 0, "unit": "75cl bottle", "unitPrice": 11, "supplier": "Cave Test", "notes": "Too sweet." },
-    { "id": 3, "name": "Test Sancerre 2024", "category": "White wine", "moment": "Dinner", "status": "Chosen", "quantity": 20, "unit": "75cl bottle", "unitPrice": 16, "supplier": "Cave Test", "servingsPerUnit": 5, "perGuest": 1 },
-    { "id": 4, "name": "Test Côtes du Rhône 2022", "category": "Red wine", "moment": "Dinner", "status": "Shortlisted", "quantity": 30, "unit": "75cl bottle", "unitPrice": 12, "supplier": "Cave Test", "servingsPerUnit": 5, "perGuest": 1.5 },
-    { "id": 5, "name": "Test Lager keg", "category": "Beer", "moment": "Party", "status": "Considering", "quantity": 2, "unit": "30L keg", "unitPrice": 140, "supplier": "Brasserie Test", "servingsPerUnit": 100, "perGuest": 1 },
-    { "id": 6, "name": "Test Gin", "category": "Spirits", "moment": "Party", "status": "Chosen", "quantity": 6, "unit": "70cl bottle", "unitPrice": 28, "servingsPerUnit": 16, "perGuest": 0.5, "notes": "Tonic from the venue." }
+    { "id": 1, "name": "Test Champagne Brut NV", "category": "Champagne & sparkling", "moment": "Cocktail hour + toast", "status": "Ordered", "quantity": 40, "unit": "75cl bottle", "supplier": "Cave Test", "servingsPerUnit": 6, "perGuest": 2, "notes": "Tasted 2026-05, everyone liked it." },
+    { "id": 2, "name": "Test Crémant de Loire", "category": "Champagne & sparkling", "moment": "Cocktail hour", "status": "Dropped", "quantity": 0, "unit": "75cl bottle", "supplier": "Cave Test", "notes": "Too sweet." },
+    { "id": 3, "name": "Test Sancerre 2024", "category": "White wine", "moment": "Dinner", "status": "Chosen", "quantity": 20, "unit": "75cl bottle", "supplier": "Cave Test", "servingsPerUnit": 5, "perGuest": 1 },
+    { "id": 4, "name": "Test Côtes du Rhône 2022", "category": "Red wine", "moment": "Dinner", "status": "Shortlisted", "quantity": 30, "unit": "75cl bottle", "supplier": "Cave Test", "servingsPerUnit": 5, "perGuest": 1.5 },
+    { "id": 5, "name": "Test Lager keg", "category": "Beer", "moment": "Party", "status": "Considering", "quantity": 2, "unit": "30L keg", "supplier": "Brasserie Test", "servingsPerUnit": 100, "perGuest": 1 },
+    { "id": 6, "name": "Test Gin", "category": "Spirits", "moment": "Party", "status": "Chosen", "quantity": 6, "unit": "70cl bottle", "servingsPerUnit": 16, "perGuest": 0.5, "notes": "Tonic from the venue." }
   ],
   "nextId": 7
 }

@@ -1,7 +1,5 @@
 import type { DiffConfig } from "./data-diff.js";
 
-const money = (v: unknown) => (v == null || v === "" ? "—" : `€${v}`);
-
 export const barDiffConfig: DiffConfig = {
   collections: {
     items: {
@@ -13,8 +11,8 @@ export const barDiffConfig: DiffConfig = {
         status: { message: (rec, before, after) => `${rec.name}: ${before || "Considering"} → ${after || "Considering"}` },
         quantity: { message: (rec, before, after) => `${rec.name}: quantity ${before ?? 0} → ${after ?? 0}` },
         unit: {},
-        unitPrice: { message: (rec, before, after) => `${rec.name}: unit price ${money(before)} → ${money(after)}` },
         supplier: {},
+        emoji: {},
         servingsPerUnit: { message: (rec, before, after) => `${rec.name}: servings per unit ${before ?? "—"} → ${after ?? "—"}` },
         perGuest: { message: (rec, before, after) => `${rec.name}: servings per guest ${before ?? "—"} → ${after ?? "—"}` },
         notes: {},

@@ -33,8 +33,11 @@ const DEFAULT_STATE = {
     quantity?: number;
     // What one unit is: "75cl bottle", "magnum", "case of 6", "keg".
     unit?: string;
-    unitPrice?: number;
     supplier?: string;
+    // Tile emoji; blank falls back to the category's on the page. Prices
+    // are deliberately not tracked — the page is a picture of the order,
+    // not a budget.
+    emoji?: string;
     // Estimate inputs: glasses per unit and glasses per guest give a
     // suggested quantity from `guestCount`; the typed `quantity` is what's
     // actually ordered.
