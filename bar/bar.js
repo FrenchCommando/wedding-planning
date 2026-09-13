@@ -16,7 +16,7 @@ function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toL
 // Groups the tiles on the page, in pouring order, each with the emoji a
 // tile shows unless the row carries its own.
 const CATEGORY_EMOJI={
-  "Champagne & sparkling":"🍾","Signature cocktails":"🍹","White wine":"🥂","Rosé":"🌸","Red wine":"🍷",
+  "Champagne":"🍾","Signature cocktails":"🍹","Rosé":"🌸","Dinner wine":"🍷",
   "Beer":"🍺","Spirits":"🥃","Other":"🧊",
 };
 const CATEGORIES=Object.keys(CATEGORY_EMOJI);

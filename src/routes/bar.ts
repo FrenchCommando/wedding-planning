@@ -27,7 +27,7 @@ const DEFAULT_STATE = {
   items: [] as {
     id: number;
     name: string;
-    // Closed list on the page (Champagne & sparkling, White wine, ...),
+    // Closed list on the page (Champagne, Signature cocktails, Dinner wine, ...),
     // groups the rows.
     category?: string;
     // When it's poured: cocktail hour, dinner, party. Free text.
