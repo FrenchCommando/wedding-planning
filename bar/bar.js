@@ -106,13 +106,13 @@ function renderView(){
     // Grouped by category in pouring order; a category that isn't in the
     // list (older data, a typo) lands under Other rather than vanishing.
     const catOf=it=>CATEGORIES.includes(it.category)?it.category:"Other";
-    const top=CATEGORIES.filter(c=>TOP.has(c)).flatMap(c=>data.items.filter(it=>catOf(it)===c));
+    const byCat=cats=>cats.flatMap(c=>data.items.filter(it=>catOf(it)===c));
+    const top=byCat(CATEGORIES.filter(c=>TOP.has(c)));
+    // Everything else is one wall of tiles, in pouring order but with no
+    // headings — the category only decides the fallback emoji there.
+    const rest=byCat(CATEGORIES.filter(c=>!TOP.has(c)));
     box.innerHTML=(top.length?`<div class="section top"><h2>Dinner</h2><div class="tiles">${top.map(tile).join("")}</div></div>`:"")+
-      '<div class="board">'+CATEGORIES.filter(c=>!TOP.has(c)).map(cat=>{
-      const rows=data.items.filter(it=>catOf(it)===cat);
-      if(!rows.length)return "";
-      return `<div class="section"><h2>${esc(cat)}</h2><div class="tiles">${rows.map(tile).join("")}</div></div>`;
-    }).join("")+'</div>';
+      (rest.length?`<div class="section wall"><h2>Bar</h2><div class="tiles">${rest.map(tile).join("")}</div></div>`:"");
   }
   document.getElementById("addBar").style.display="none";
 }

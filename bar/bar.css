@@ -36,16 +36,14 @@ input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);
 .summary{text-align:center;color:var(--muted);font-size:13px;margin-bottom:28px;}
 .summary .note{font-style:italic;display:block;font-size:12px;margin-top:2px;}
 
-/* Transposed: one column per category across the page, bottles stacked
-   under each heading, so the whole order fits one screen height on a
-   laptop. Narrow screens scroll sideways rather than stacking columns. */
-.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(130px,1fr);gap:14px;overflow-x:auto;padding-bottom:8px;}
 .section h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600;text-align:center;}
-.tiles{display:flex;flex-direction:column;gap:8px;}
+/* The wall: every other bottle in one wrapping row of tiles, no columns. */
+.section.wall .tiles{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;}
+.section.wall .tile{width:130px;}
 /* The dinner line: the wines and the champagne side by side, larger, above
    the columns. */
 .section.top{margin-bottom:28px;}
-.section.top .tiles{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:14px;}
+.section.top .tiles{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;}
 .section.top .tile{width:180px;padding:16px 12px 12px;}
 .section.top .tile .emoji{font-size:44px;}
 .section.top .tile .name{font-size:14px;}
