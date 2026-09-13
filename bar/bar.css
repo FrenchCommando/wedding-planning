@@ -42,6 +42,13 @@ input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(130px,1fr);gap:14px;overflow-x:auto;padding-bottom:8px;}
 .section h2{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:600;text-align:center;}
 .tiles{display:flex;flex-direction:column;gap:8px;}
+/* The dinner line: the wines and the champagne side by side, larger, above
+   the columns. */
+.section.top{margin-bottom:28px;}
+.section.top .tiles{flex-direction:row;justify-content:center;flex-wrap:wrap;gap:14px;}
+.section.top .tile{width:180px;padding:16px 12px 12px;}
+.section.top .tile .emoji{font-size:44px;}
+.section.top .tile .name{font-size:14px;}
 
 /* Tiles: emoji, the name, a quantity badge. Status is carried by the
    tint (chosen: warm; ordered/delivered: green; dropped: faded) rather than

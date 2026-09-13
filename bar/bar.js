@@ -20,6 +20,10 @@ const CATEGORY_EMOJI={
   "Beer":"🍺","Spirits":"🥃","Other":"🧊",
 };
 const CATEGORIES=Object.keys(CATEGORY_EMOJI);
+// What's on the table at dinner sits on one line across the top of the
+// board (the dinner wines and the champagne for the toast); the rest —
+// cocktails, beer, spirits — are the columns below.
+const TOP=new Set(["Dinner wine","Champagne"]);
 function emojiFor(it){return it.emoji||CATEGORY_EMOJI[it.category]||CATEGORY_EMOJI.Other;}
 // Considering is the default; only the last three count as "in the order".
 const STATUSES=["Considering","Shortlisted","Chosen","Ordered","Delivered","Dropped"];
@@ -101,8 +105,11 @@ function renderView(){
   else{
     // Grouped by category in pouring order; a category that isn't in the
     // list (older data, a typo) lands under Other rather than vanishing.
-    box.innerHTML='<div class="board">'+CATEGORIES.map(cat=>{
-      const rows=data.items.filter(it=>(CATEGORIES.includes(it.category)?it.category:"Other")===cat);
+    const catOf=it=>CATEGORIES.includes(it.category)?it.category:"Other";
+    const top=CATEGORIES.filter(c=>TOP.has(c)).flatMap(c=>data.items.filter(it=>catOf(it)===c));
+    box.innerHTML=(top.length?`<div class="section top"><h2>Dinner</h2><div class="tiles">${top.map(tile).join("")}</div></div>`:"")+
+      '<div class="board">'+CATEGORIES.filter(c=>!TOP.has(c)).map(cat=>{
+      const rows=data.items.filter(it=>catOf(it)===cat);
       if(!rows.length)return "";
       return `<div class="section"><h2>${esc(cat)}</h2><div class="tiles">${rows.map(tile).join("")}</div></div>`;
     }).join("")+'</div>';
