@@ -3,5 +3,4 @@ dist/
 .env*
 !.env.example
 data/*
-!data/*-seed.json.example
 .deploy-key*

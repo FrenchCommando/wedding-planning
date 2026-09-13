@@ -20,10 +20,23 @@ function seedPath(name: string): string {
   return `./data/${name}-seed.json`;
 }
 
+// The committed fake-data fixture for a sub-project documents its file's
+// shape. Most live in the sub-project's own folder; script and speeches
+// live under ceremony/, so look across the top-level folders rather than
+// guessing the path.
+function devFixturePath(name: string): string | undefined {
+  const file = `${name}-seed-dev.json`;
+  for (const dir of fs.readdirSync(".", { withFileTypes: true })) {
+    if (dir.isDirectory() && fs.existsSync(`${dir.name}/${file}`)) return `${dir.name}/${file}`;
+  }
+  return undefined;
+}
+
 function loadSeed(name: string): unknown {
   const p = seedPath(name);
   if (!fs.existsSync(p)) {
-    throw new Error(`missing ${p} — copy data/${name}-seed.json.example and fill in real data`);
+    const fixture = devFixturePath(name);
+    throw new Error(`missing ${p} — write it with the shape of ${fixture ?? "the sub-project's committed dev fixture"}`);
   }
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
