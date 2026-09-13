@@ -76,7 +76,9 @@ function renderSummary(){
     (data.guestCountNote?`<span class="note">${esc(data.guestCountNote)}</span>`:"");
 }
 
-// A tile: emoji, name, when it's poured, and the quantity as a badge. The
+// A tile: emoji, name, when it's poured, and the quantity as a badge. A
+// " — " in the name is where the tile breaks the line ("Champagne — blanc
+// de blancs"), so the wrap is chosen per bottle, not by the box width. The
 // hover title carries the rest (status, supplier, notes, suggested
 // quantity) so it's there without cluttering the wall. The badge goes red
 // when the typed quantity is under the headcount estimate.
@@ -91,7 +93,7 @@ function tile(it){
     <div class="tile ${esc(cls)}" title="${esc(title)}">
       ${q?`<span class="qty${short?" short":""}">${q}${unit}</span>`:""}
       <div class="emoji">${esc(emojiFor(it))}</div>
-      <div class="name">${esc(it.name)||"(unnamed)"}</div>
+      <div class="name">${it.name?it.name.split(" — ").map(esc).join("<br>"):"(unnamed)"}</div>
       ${it.moment?`<div class="when">${esc(it.moment)}</div>`:""}
     </div>`;
 }
