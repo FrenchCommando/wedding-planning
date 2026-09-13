@@ -143,7 +143,8 @@ function renderView(){
       <div class="vhead">
         <span class="icon">${esc(g.emoji)}</span>
         <span class="vendor">${esc(g.key)}</span>
-        <span class="total">${money(total)}${payers?` · ${esc(payers)}`:""}</span>
+        <span class="total">${money(total)}</span>
+        ${payers?`<span class="payer">${esc(payers)}</span>`:""}
       </div>
       <div class="past">${g.past.map(chip).join("")}</div>
       <div class="future">${g.future.map(chip).join("")||'<span class="settled">settled</span>'}</div>

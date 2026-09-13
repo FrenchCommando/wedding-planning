@@ -48,10 +48,11 @@ input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);
 .vendorRow .past,.vendorRow .future{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;min-height:100%;}
 .vendorRow .past{justify-content:flex-end;border-right:2px solid var(--accent);}
 .vendorRow .future{justify-content:flex-start;}
-.vendorRow .vhead{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:12px 12px 12px 0;}
-.vendorRow .vhead .icon{font-size:24px;line-height:1;grid-row:1 / span 2;}
+.vendorRow .vhead{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;align-items:center;padding:12px 12px 12px 0;}
+.vendorRow .vhead .icon{font-size:24px;line-height:1;grid-row:1 / span 3;align-self:start;margin-top:2px;}
 .vendorRow .vhead .vendor{font-weight:600;font-size:14px;line-height:1.2;}
-.vendorRow .vhead .total{font-size:11px;color:var(--muted);}
+.vendorRow .vhead .total{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-size:22px;line-height:1.1;}
+.vendorRow .vhead .payer{font-size:11px;color:var(--muted);}
 .vendorRow .settled{font-size:12px;color:var(--muted);font-style:italic;align-self:center;}
 
 /* One installment. Pending ones are tinted by urgency — overdue red, due
