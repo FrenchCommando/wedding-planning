@@ -122,6 +122,7 @@ jobs:
           /stationery/stationery.html
           /transportation/transportation.html
           /bar/bar.html
+          /payments/payments.html
           "
 
           # Give the container a moment to bind its port before asserting.

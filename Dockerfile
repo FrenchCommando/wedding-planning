@@ -22,6 +22,7 @@ COPY playlist ./playlist
 COPY stationery ./stationery
 COPY transportation ./transportation
 COPY bar ./bar
+COPY payments ./payments
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
