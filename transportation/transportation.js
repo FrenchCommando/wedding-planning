@@ -13,12 +13,18 @@ async function promptForLogin(){
 function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+", "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});}
 
-// Two legs, each its own headcount and its own set of departures. A rider
-// answered the two questions separately on the RSVP form, so the page keeps
-// them separate too — the numbers differ (a few sleep at the venue).
+// Three legs, each its own headcount and its own set of departures. The
+// wedding party travels to the venue separately and earlier than the
+// guests, so it's its own leg rather than a flag on "To the venue" — a
+// rider is on one or the other. The two guest legs come from the two RSVP
+// questions, answered separately, so the page keeps them separate too (the
+// numbers differ — a few sleep at the venue). The unnamed headcount rides
+// the guest legs only (`group`): a group on a coach comes back on it, and
+// it is never the wedding party.
 const LEGS=[
-  {key:"toVenue",label:"To the venue"},
-  {key:"back",label:"Back"},
+  {key:"party",label:"Wedding party"},
+  {key:"toVenue",label:"To the venue",group:true},
+  {key:"back",label:"Back",group:true},
 ];
 
 let data=null, revisionId=null, editing=false, session=null;
@@ -46,9 +52,12 @@ async function loadData(){
   if(!data.riders)document.getElementById("riderSection").hidden=true;
 }
 
-// Named riders on a leg plus the unnamed headcount, which is assumed to
-// ride both ways — it's a group, and a group on a coach comes back on it.
-function riding(leg){return (data.riders||[]).filter(r=>r[leg]).length+(Number(data.extraCount)||0);}
+// Named riders on a leg, plus the unnamed headcount on the guest legs.
+function riding(leg){
+  const extra=LEGS.find(l=>l.key===leg)?.group?(Number(data.extraCount)||0):0;
+  return (data.riders||[]).filter(r=>r[leg]).length+extra;
+}
+function riderSummary(){return LEGS.map(l=>`${riding(l.key)} ${l.label.toLowerCase()}`).join(" · ");}
 function capacity(leg){return data.shuttles.filter(s=>s.direction===leg).reduce((n,s)=>n+(Number(s.capacity)||0),0);}
 
 function shuttleRow(s){
@@ -84,7 +93,7 @@ function renderView(){
 
   if(!data.riders)return;
   const riders=document.getElementById("riderBox");
-  document.getElementById("riderCount").textContent=`${riding("toVenue")} to the venue · ${riding("back")} back`;
+  document.getElementById("riderCount").textContent=riderSummary();
   const extra=Number(data.extraCount)||0;
   const extraRow=extra?`
       <div class="riderRow">
@@ -140,7 +149,7 @@ function renderEdit(){
   });
 
   const riders=document.getElementById("riderBox");
-  const refreshCount=()=>{document.getElementById("riderCount").textContent=`${riding("toVenue")} to the venue · ${riding("back")} back`;};
+  const refreshCount=()=>{document.getElementById("riderCount").textContent=riderSummary();};
   refreshCount();
   riders.innerHTML=data.riders.map((r,i)=>`
     <div class="editRow" data-i="${i}">
@@ -155,7 +164,18 @@ function renderEdit(){
     const i=Number(row.dataset.i);
     row.querySelectorAll("[data-field]").forEach(inp=>{
       const apply=()=>{
-        if(inp.type==="checkbox"){data.riders[i][inp.dataset.field]=inp.checked;refreshCount();}
+        if(inp.type==="checkbox"){
+          const f=inp.dataset.field;
+          data.riders[i][f]=inp.checked;
+          // One ride out: the wedding party leg and the guest leg to the
+          // venue are alternatives, ticking one clears the other.
+          if(inp.checked&&(f==="party"||f==="toVenue")){
+            const other=f==="party"?"toVenue":"party";
+            data.riders[i][other]=false;
+            row.querySelector(`[data-field="${other}"]`).checked=false;
+          }
+          refreshCount();
+        }
         else data.riders[i][inp.dataset.field]=inp.value;
       };
       inp.addEventListener("input",apply);
@@ -255,7 +275,7 @@ function setupControls(){
     renderEdit();
   });
   document.getElementById("addRider").addEventListener("click",()=>{
-    data.riders.push({id:(data.nextId||1),name:"",household:"",toVenue:true,back:true,notes:""});
+    data.riders.push({id:(data.nextId||1),name:"",household:"",party:false,toVenue:true,back:true,notes:""});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
   });

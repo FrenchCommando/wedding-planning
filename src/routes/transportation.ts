@@ -9,22 +9,24 @@ import { logRequest } from "../activity-log.js";
 const FILE_NAME = "transportation.json";
 
 const DEFAULT_STATE = {
-  // One row per departure: a coach leaving somewhere at some time. `capacity`
+  // One row per departure: a vehicle leaving somewhere at some time. `capacity`
   // is seats on that vehicle, so the page can set the sum against the rider
-  // count for each direction.
+  // count for each leg. Three legs: `party` is the wedding party's own,
+  // earlier ride to the venue; `toVenue`/`back` are the guest coaches.
   shuttles: [] as {
     id: number;
     time: string;
     from: string;
     to: string;
-    direction?: "toVenue" | "back";
+    direction?: "party" | "toVenue" | "back";
     capacity?: number;
     notes?: string;
   }[],
-  // Only people who asked for a seat, seeded from the RSVP form's two shuttle
+  // Only people who asked for a seat, from the RSVP form's two shuttle
   // questions and editable afterward like the other guest lists. Each rider
-  // says which legs they take — most take both, a few only the return.
-  riders: [] as { id: number; name: string; household?: string; toVenue?: boolean; back?: boolean; notes?: string }[],
+  // says which legs they take — `party` and `toVenue` are alternatives (one
+  // ride out), most guests take both guest legs, a few only the return.
+  riders: [] as { id: number; name: string; household?: string; party?: boolean; toVenue?: boolean; back?: boolean; notes?: string }[],
   // A group tallied as a headcount with no per-person names, same as the
   // welcome-drinks / brunch pages.
   extraCount: 0,

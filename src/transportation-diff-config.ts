@@ -20,6 +20,7 @@ export const transportationDiffConfig: DiffConfig = {
       fields: {
         name: { message: (_rec, before, after) => `Rider renamed: ${before} → ${after}` },
         household: {},
+        party: { message: (rec, before, after) => `${rec.name}: wedding party ride ${leg(before)} → ${leg(after)}` },
         toVenue: { message: (rec, before, after) => `${rec.name}: shuttle to the venue ${leg(before)} → ${leg(after)}` },
         back: { message: (rec, before, after) => `${rec.name}: shuttle back ${leg(before)} → ${leg(after)}` },
         notes: {},
