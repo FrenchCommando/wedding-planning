@@ -84,32 +84,70 @@ function renderSummary(){
 const DEFAULT_EMOJI="🧾";
 function emojiFor(it){return it.emoji||DEFAULT_EMOJI;}
 
-function payRow(it){
+// Rows are grouped by vendor; a row with no vendor groups under the first
+// part of its description ("Sunday brunch — deposit" → "Sunday brunch").
+function groupKey(it){return (it.vendor||"").trim()||(it.description||"").split(" — ")[0].trim()||"(no vendor)";}
+function groups(){
+  const map=new Map();
+  for(const it of data.items){
+    const k=groupKey(it);
+    if(!map.has(k))map.set(k,{key:k,items:[]});
+    map.get(k).items.push(it);
+  }
+  const out=[...map.values()];
+  for(const g of out){
+    g.past=g.items.filter(isDone).sort((a,b)=>(a.paidDate||"")<(b.paidDate||"")?-1:1);
+    g.future=g.items.filter(it=>!isDone(it)).sort((a,b)=>(a.dueDate||"9999")<(b.dueDate||"9999")?-1:1);
+    g.nextDue=g.future.find(it=>parseDay(it.dueDate))?.dueDate||null;
+    g.emoji=g.items.map(emojiFor).find(Boolean)||DEFAULT_EMOJI;
+  }
+  // Vendors with something due come first, soonest deadline on top; then
+  // the ones with undated balances; settled vendors last.
+  const rank=g=>g.nextDue?0:g.future.length?1:2;
+  out.sort((a,b)=>rank(a)-rank(b)||((a.nextDue||"9999")<(b.nextDue||"9999")?-1:(a.nextDue||"9999")>(b.nextDue||"9999")?1:0));
+  return out;
+}
+
+// One installment: the amount, what it was for, when. Pending ones are
+// tinted by urgency.
+function chip(it){
   const done=isDone(it);
   const cls=done?"done":urgency(it);
-  const date=done?(it.paidDate?`paid ${fmtDay(it.paidDate)}`:"paid"):dueLabel(it.dueDate);
-  const meta=[it.payer?`paid by ${it.payer}`:"",it.method,it.notes].filter(Boolean).join(" · ");
+  const date=done?(it.paidDate?fmtDay(it.paidDate):"paid"):dueLabel(it.dueDate);
+  const title=[it.payer?`paid by ${it.payer}`:"",it.method,it.notes].filter(Boolean).join("\n");
+  const what=(it.description||"").split(" — ").slice(1).join(" — ")||it.description||"";
   return `
-    <div class="payRow ${cls}">
-      <div class="icon">${esc(emojiFor(it))}</div>
-      <div><span class="vendor">${esc(it.vendor)||"(no vendor)"}</span>${it.description?` <span class="desc">${esc(it.description)}</span>`:""}</div>
-      <div class="date">${esc(date)}</div>
-      <div class="amount">${money(it.amount)}</div>
-      ${meta?`<div class="meta">${esc(meta)}</div>`:""}
+    <div class="chip ${cls}" title="${esc(title)}">
+      <span class="amount">${it.amount!=null&&it.amount!==""?money(it.amount):"—"}</span>
+      ${what?`<span class="what">${esc(what)}</span>`:""}
+      <span class="date">${esc(date)}</span>
     </div>`;
 }
 
 function renderView(){
   renderSummary();
   document.getElementById("currencyEdit").innerHTML="";
-  // Pending soonest first, undated last; Done most recently paid first.
-  const pending=data.items.filter(it=>!isDone(it)).sort((a,b)=>(a.dueDate||"9999")<(b.dueDate||"9999")?-1:1);
-  const done=data.items.filter(isDone).sort((a,b)=>(a.paidDate||"")<(b.paidDate||"")?1:-1);
+  const box=document.getElementById("ledger");
+  if(!data.items.length){box.innerHTML='<p class="empty">Nothing on the ledger yet.</p>';document.getElementById("addBar").style.display="none";return;}
   const sum=list=>list.reduce((n,it)=>n+(Number(it.amount)||0),0);
-  document.getElementById("pendingCount").textContent=pending.length?`${pending.length} payment${pending.length===1?"":"s"} · ${money(sum(pending))}`:"";
-  document.getElementById("pendingBox").innerHTML=pending.length?pending.map(payRow).join(""):'<p class="empty">Nothing left to pay.</p>';
-  document.getElementById("doneCount").textContent=done.length?`${done.length} payment${done.length===1?"":"s"} · ${money(sum(done))}`:"";
-  document.getElementById("doneBox").innerHTML=done.length?done.map(payRow).join(""):'<p class="empty">Nothing paid yet.</p>';
+  box.innerHTML=`
+    <div class="vendorRow head">
+      <div></div>
+      <div class="past"><span>Paid</span></div>
+      <div class="future"><span>Due</span></div>
+    </div>`+groups().map(g=>{
+      const total=sum(g.items);
+      const payers=[...new Set(g.items.map(it=>it.payer).filter(Boolean))].join(" / ");
+      return `
+    <div class="vendorRow">
+      <div class="vhead">
+        <span class="icon">${esc(g.emoji)}</span>
+        <span class="vendor">${esc(g.key)}</span>
+        <span class="total">${money(total)}${payers?` · ${esc(payers)}`:""}</span>
+      </div>
+      <div class="past">${g.past.map(chip).join("")}</div>
+      <div class="future">${g.future.map(chip).join("")||'<span class="settled">settled</span>'}</div>
+    </div>`;}).join("");
   document.getElementById("addBar").style.display="none";
 }
 
@@ -138,23 +176,19 @@ function renderEdit(){
         <input data-field="notes" value="${esc(it.notes||"")}" placeholder="Notes">
       </div>
     </div>`;
-  const indexed=data.items.map((it,i)=>[it,i]);
-  document.getElementById("pendingCount").textContent="";
-  document.getElementById("doneCount").textContent="";
-  document.getElementById("pendingBox").innerHTML=indexed.filter(([it])=>!isDone(it)).map(([it,i])=>editRow(it,i)).join("");
-  document.getElementById("doneBox").innerHTML=indexed.filter(([it])=>isDone(it)).map(([it,i])=>editRow(it,i)).join("");
-  document.querySelectorAll("#pendingBox .editRow, #doneBox .editRow").forEach(row=>{
+  // Same vendor order as the view; rows carry their index into data.items.
+  const indexed=new Map(data.items.map((it,i)=>[it,i]));
+  const box=document.getElementById("ledger");
+  box.innerHTML=groups().map(g=>`
+    <div class="editGroup"><h3>${esc(g.emoji)} ${esc(g.key)}</h3>${g.past.concat(g.future).map(it=>editRow(it,indexed.get(it))).join("")}</div>`).join("");
+  box.querySelectorAll(".editRow").forEach(row=>{
     const i=Number(row.dataset.i);
     row.querySelectorAll("[data-field]").forEach(inp=>{
       const apply=()=>{
         const f=inp.dataset.field;
         data.items[i][f]=inp.type==="number"?(inp.value===""?undefined:Number(inp.value)):inp.value;
-        // Marking a row Done with no paid date stamps today; the status
-        // decides which section the row lives in, so re-render.
-        if(f==="status"){
-          if(inp.value==="Done"&&!data.items[i].paidDate)data.items[i].paidDate=today().toISOString().slice(0,10);
-          renderEdit();return;
-        }
+        // Marking a row Done with no paid date stamps today.
+        if(f==="status"&&inp.value==="Done"&&!data.items[i].paidDate)data.items[i].paidDate=today().toISOString().slice(0,10);
         renderSummary();
       };
       inp.addEventListener("input",apply);
@@ -237,8 +271,8 @@ function setupControls(){
     data.items.push({id:(data.nextId||1),vendor:"",emoji:"",description:"",status:"Pending",dueDate:"",payer:"",method:"",notes:""});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
-    const rows=document.querySelectorAll("#pendingBox .editRow");
-    rows[rows.length-1].querySelector(".vendor-input").focus();
+    const row=document.querySelector(`#ledger .editRow[data-i="${data.items.length-1}"]`);
+    if(row)row.querySelector(".vendor-input").focus();
   });
   document.getElementById("historyBtn").addEventListener("click",openHistory);
   const historyOverlay=document.getElementById("history");

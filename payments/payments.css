@@ -24,7 +24,7 @@ button.secondary{background:transparent;color:inherit;border:1px solid var(--lin
 button.danger{background:var(--danger);color:#fff;}
 input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);}
 
-.wrap{max-width:820px;margin:0 auto;}
+.wrap{max-width:1100px;margin:0 auto;}
 
 /* Three numbers across the top: paid, still to pay, and the next deadline. */
 .summary{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-bottom:32px;}
@@ -38,24 +38,43 @@ input,textarea,select{font:inherit;padding:7px 9px;border:1px solid var(--line);
 .section h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 4px;font-weight:600;}
 .count{font-size:12px;color:var(--muted);margin-bottom:12px;}
 
-/* One row per payment: vendor and what for, the date, the amount. Pending
-   rows are tinted by urgency — overdue red, due within two weeks warm. */
-.payRow{display:grid;grid-template-columns:auto 1fr auto auto;gap:4px 14px;align-items:baseline;padding:10px 12px;margin:0 -12px;border-radius:10px;border-bottom:1px solid var(--line);}
-.payRow:last-child{border-bottom:0;}
-.payRow .icon{font-size:22px;line-height:1;align-self:center;width:28px;text-align:center;}
-.payRow .vendor{font-weight:600;font-size:14px;}
-.payRow .desc{font-size:13px;color:var(--muted);}
-.payRow .date{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right;}
-.payRow .amount{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-size:17px;white-space:nowrap;text-align:right;min-width:90px;}
-.payRow .meta{grid-column:2 / -1;font-size:12px;color:var(--muted);}
-.payRow.late{background:var(--late-bg);}
-.payRow.late .date{color:var(--danger);font-weight:600;}
-.payRow.soon{background:var(--soon-bg);}
-.payRow.done .amount{color:var(--ok);}
-@media (max-width:520px){
-  .payRow{grid-template-columns:auto 1fr auto;}
-  .payRow .date{grid-column:2;text-align:left;}
+/* One row per vendor. Paid installments sit left of a vertical line that
+   runs the whole ledger — today — and what's still due sits right of it,
+   so the eye reads past | future without a status column. */
+.vendorRow{display:grid;grid-template-columns:200px 1fr 1fr;align-items:start;border-bottom:1px solid var(--line);}
+.vendorRow:last-child{border-bottom:0;}
+.vendorRow.head{border-bottom:0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.vendorRow.head .past,.vendorRow.head .future{padding-top:0;padding-bottom:6px;}
+.vendorRow .past,.vendorRow .future{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;min-height:100%;}
+.vendorRow .past{justify-content:flex-end;border-right:2px solid var(--accent);}
+.vendorRow .future{justify-content:flex-start;}
+.vendorRow .vhead{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:12px 12px 12px 0;}
+.vendorRow .vhead .icon{font-size:24px;line-height:1;grid-row:1 / span 2;}
+.vendorRow .vhead .vendor{font-weight:600;font-size:14px;line-height:1.2;}
+.vendorRow .vhead .total{font-size:11px;color:var(--muted);}
+.vendorRow .settled{font-size:12px;color:var(--muted);font-style:italic;align-self:center;}
+
+/* One installment. Pending ones are tinted by urgency — overdue red, due
+   within two weeks warm. Payer, method and notes live in the hover title. */
+.chip{display:flex;flex-direction:column;gap:1px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);min-width:120px;}
+.chip .amount{font-family:Georgia,"Iowan Old Style","Times New Roman",serif;font-size:16px;white-space:nowrap;}
+.chip .what{font-size:11px;color:var(--muted);line-height:1.2;}
+.chip .date{font-size:11px;color:var(--muted);white-space:nowrap;}
+.chip.done{background:var(--ok-bg);border-color:transparent;}
+.chip.done .amount{color:var(--ok);}
+.chip.soon{background:var(--soon-bg);border-color:var(--accent);}
+.chip.late{background:var(--late-bg);border-color:var(--danger);}
+.chip.late .date{color:var(--danger);font-weight:600;}
+@media (max-width:720px){
+  .vendorRow{grid-template-columns:1fr 1fr;}
+  .vendorRow .vhead{grid-column:1 / -1;padding-bottom:0;}
+  .vendorRow.head>div:first-child{display:none;}
 }
+
+/* Edit mode groups the flat rows under the same vendor headings. */
+.editGroup{padding:6px 0 10px;border-bottom:1px solid var(--line);}
+.editGroup:last-child{border-bottom:0;}
+.editGroup h3{font-size:13px;margin:6px 0 2px;font-weight:600;}
 
 /* Edit mode: one line per payment, details on a second line. */
 .editRow{display:flex;gap:8px;padding:8px 0;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);}
