@@ -17,7 +17,7 @@ function fmtRev(rev){const d=new Date(rev||"");if(isNaN(d))return"";return d.toL
 // tile shows unless the row carries its own.
 const CATEGORY_EMOJI={
   "Signature cocktails":"🍹","Rosé":"🌸","Dinner wine":"🍷","Champagne":"🍾",
-  "Beer":"🍺","Spirits":"🍾","Other":"🧊",
+  "Beer":"🍺","Spirits":"🥃","Other":"🧊",
 };
 const CATEGORIES=Object.keys(CATEGORY_EMOJI);
 // The board opens with featured lines — the signature cocktails (his and
