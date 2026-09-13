@@ -49,15 +49,24 @@ async function loadData(){
   data.shuttles=data.shuttles||[];
   // The server leaves `riders` off entirely for the guest role — the
   // timetable is theirs to see, the passenger list is not.
-  if(!data.riders)document.getElementById("riderSection").hidden=true;
+  if(!data.riders){
+    document.getElementById("partySection").hidden=true;
+    document.getElementById("riderSection").hidden=true;
+  }
 }
+
+// The wedding party has its own section on the page, not just a tag on the
+// row: they travel separately, and the caterer/driver reads them as one
+// group. A rider is in one section or the other.
+function isParty(r){return !!r.party;}
+function riderSummary(){return LEGS.filter(l=>l.key!=="party").map(l=>`${riding(l.key)} ${l.label.toLowerCase()}`).join(" · ");}
+function partySummary(){const n=riding("party"), back=(data.riders||[]).filter(r=>isParty(r)&&r.back).length;return `${n} to the venue · ${back} back on the shuttle`;}
 
 // Named riders on a leg, plus the unnamed headcount on the guest legs.
 function riding(leg){
   const extra=LEGS.find(l=>l.key===leg)?.group?(Number(data.extraCount)||0):0;
   return (data.riders||[]).filter(r=>r[leg]).length+extra;
 }
-function riderSummary(){return LEGS.map(l=>`${riding(l.key)} ${l.label.toLowerCase()}`).join(" · ");}
 function capacity(leg){return data.shuttles.filter(s=>s.direction===leg).reduce((n,s)=>n+(Number(s.capacity)||0),0);}
 
 function shuttleRow(s){
@@ -92,6 +101,18 @@ function renderView(){
   document.getElementById("shuttleCount").textContent=`${data.shuttles.length} departure${data.shuttles.length===1?"":"s"}`;
 
   if(!data.riders)return;
+  const riderRow=r=>`
+      <div class="riderRow">
+        <span class="name">${esc(r.name)}</span>
+        ${r.household?`<span class="household">${esc(r.household)}</span>`:""}
+        ${LEGS.map(l=>`<span class="leg${r[l.key]?" on":""}">${l.label}</span>`).join("")}
+        ${r.notes?`<span class="notes">${esc(r.notes)}</span>`:""}
+      </div>`;
+
+  const party=data.riders.filter(isParty);
+  document.getElementById("partyCount").textContent=partySummary();
+  document.getElementById("partyBox").innerHTML=party.length?party.map(riderRow).join(""):'<p class="empty">No one in the wedding party ride yet.</p>';
+
   const riders=document.getElementById("riderBox");
   document.getElementById("riderCount").textContent=riderSummary();
   const extra=Number(data.extraCount)||0;
@@ -100,17 +121,9 @@ function renderView(){
         <span class="name">+${extra} more</span>
         <span class="notes">${esc(data.extraCountNote||"headcount only, names not collected")}</span>
       </div>`:"";
-  if(!data.riders.length&&!extra){riders.innerHTML='<p class="empty">No one on the list yet.</p>';}
-  else{
-    riders.innerHTML=data.riders.map(r=>`
-      <div class="riderRow">
-        <span class="name">${esc(r.name)}</span>
-        ${r.household?`<span class="household">${esc(r.household)}</span>`:""}
-        ${LEGS.map(l=>`<span class="leg${r[l.key]?" on":""}">${l.label}</span>`).join("")}
-        ${r.notes?`<span class="notes">${esc(r.notes)}</span>`:""}
-      </div>
-    `).join("")+extraRow;
-  }
+  const guests=data.riders.filter(r=>!isParty(r));
+  if(!guests.length&&!extra){riders.innerHTML='<p class="empty">No one on the list yet.</p>';}
+  else riders.innerHTML=guests.map(riderRow).join("")+extraRow;
 
   document.getElementById("addBar").style.display="none";
 }
@@ -148,19 +161,25 @@ function renderEdit(){
     });
   });
 
-  const riders=document.getElementById("riderBox");
-  const refreshCount=()=>{document.getElementById("riderCount").textContent=riderSummary();};
+  const refreshCount=()=>{
+    document.getElementById("riderCount").textContent=riderSummary();
+    document.getElementById("partyCount").textContent=partySummary();
+  };
   refreshCount();
-  riders.innerHTML=data.riders.map((r,i)=>`
+  // Rows carry their index into data.riders, whichever section they land in.
+  const editRow=(r,i)=>`
     <div class="editRow" data-i="${i}">
       <input data-field="name" value="${esc(r.name)}" placeholder="Name">
       <input data-field="household" value="${esc(r.household||"")}" placeholder="Household">
       ${LEGS.map(l=>`<label class="check"><input type="checkbox" data-field="${l.key}"${r[l.key]?" checked":""}>${l.label}</label>`).join("")}
       <input data-field="notes" value="${esc(r.notes||"")}" placeholder="Notes">
       <button class="danger" data-action="removeR">×</button>
-    </div>
-  `).join("");
-  riders.querySelectorAll(".editRow").forEach(row=>{
+    </div>`;
+  const indexed=data.riders.map((r,i)=>[r,i]);
+  document.getElementById("partyBox").innerHTML=indexed.filter(([r])=>isParty(r)).map(([r,i])=>editRow(r,i)).join("");
+  const riders=document.getElementById("riderBox");
+  riders.innerHTML=indexed.filter(([r])=>!isParty(r)).map(([r,i])=>editRow(r,i)).join("");
+  document.querySelectorAll("#partyBox .editRow, #riderBox .editRow").forEach(row=>{
     const i=Number(row.dataset.i);
     row.querySelectorAll("[data-field]").forEach(inp=>{
       const apply=()=>{
@@ -170,10 +189,10 @@ function renderEdit(){
           // One ride out: the wedding party leg and the guest leg to the
           // venue are alternatives, ticking one clears the other.
           if(inp.checked&&(f==="party"||f==="toVenue")){
-            const other=f==="party"?"toVenue":"party";
-            data.riders[i][other]=false;
-            row.querySelector(`[data-field="${other}"]`).checked=false;
+            data.riders[i][f==="party"?"toVenue":"party"]=false;
           }
+          // The party box decides which section the row lives in.
+          if(f==="party"||(f==="toVenue"&&inp.checked)){renderEdit();return;}
           refreshCount();
         }
         else data.riders[i][inp.dataset.field]=inp.value;
@@ -276,6 +295,11 @@ function setupControls(){
   });
   document.getElementById("addRider").addEventListener("click",()=>{
     data.riders.push({id:(data.nextId||1),name:"",household:"",party:false,toVenue:true,back:true,notes:""});
+    data.nextId=(data.nextId||1)+1;
+    renderEdit();
+  });
+  document.getElementById("addParty").addEventListener("click",()=>{
+    data.riders.push({id:(data.nextId||1),name:"",household:"",party:true,toVenue:false,back:true,notes:""});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
   });
