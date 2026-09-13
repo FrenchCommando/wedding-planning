@@ -20,10 +20,15 @@ const CATEGORY_EMOJI={
   "Beer":"🍺","Spirits":"🥃","Other":"🧊",
 };
 const CATEGORIES=Object.keys(CATEGORY_EMOJI);
-// What's on the table at dinner sits on one line across the top of the
-// board (the dinner wines and the champagne for the toast); the rest —
-// cocktails, beer, spirits — are the columns below.
-const TOP=new Set(["Dinner wine","Champagne"]);
+// The board opens with featured lines — the signature cocktails (his and
+// hers), then what's on the table at dinner (the wines and the champagne
+// for the toast) — each a row of larger tiles. Everything else is the
+// wall below.
+const TOP_LINES=[
+  {title:"Signature cocktails",cats:["Signature cocktails"]},
+  {title:"Dinner",cats:["Dinner wine","Champagne"]},
+];
+const TOP=new Set(TOP_LINES.flatMap(l=>l.cats));
 function emojiFor(it){return it.emoji||CATEGORY_EMOJI[it.category]||CATEGORY_EMOJI.Other;}
 // Considering is the default; only the last three count as "in the order".
 const STATUSES=["Considering","Shortlisted","Chosen","Ordered","Delivered","Dropped"];
@@ -109,11 +114,13 @@ function renderView(){
     // list (older data, a typo) lands under Other rather than vanishing.
     const catOf=it=>CATEGORIES.includes(it.category)?it.category:"Other";
     const byCat=cats=>cats.flatMap(c=>data.items.filter(it=>catOf(it)===c));
-    const top=byCat(CATEGORIES.filter(c=>TOP.has(c)));
     // Everything else is one wall of tiles, in pouring order but with no
     // headings — the category only decides the fallback emoji there.
     const rest=byCat(CATEGORIES.filter(c=>!TOP.has(c)));
-    box.innerHTML=(top.length?`<div class="section top"><h2>Dinner</h2><div class="tiles">${top.map(tile).join("")}</div></div>`:"")+
+    box.innerHTML=TOP_LINES.map(l=>{
+        const rows=byCat(l.cats);
+        return rows.length?`<div class="section top"><h2>${esc(l.title)}</h2><div class="tiles">${rows.map(tile).join("")}</div></div>`:"";
+      }).join("")+
       (rest.length?`<div class="section wall"><h2>Bar</h2><div class="tiles">${rest.map(tile).join("")}</div></div>`:"");
   }
   document.getElementById("addBar").style.display="none";
