@@ -24,6 +24,8 @@ const DEFAULT_STATE = {
     // ISO date. Pending rows: when it's due. Done rows: when it was paid.
     dueDate?: string;
     paidDate?: string;
+    // Who pays this one — the couple, one side's parents… Free text.
+    payer?: string;
     // Bank transfer, card, cheque, cash — free text.
     method?: string;
     // Row emoji (the vendor's trade); blank shows a receipt on the page.

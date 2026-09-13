@@ -14,6 +14,7 @@ export const paymentsDiffConfig: DiffConfig = {
         status: { message: (rec, before, after) => `${label(rec)}: ${before || "Pending"} → ${after || "Pending"}` },
         dueDate: { message: (rec, before, after) => `${label(rec)}: due ${before || "—"} → ${after || "—"}` },
         paidDate: { message: (rec, before, after) => `${label(rec)}: paid ${before || "—"} → ${after || "—"}` },
+        payer: {},
         method: {},
         emoji: {},
         notes: {},

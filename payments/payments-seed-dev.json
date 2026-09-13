@@ -1,21 +1,21 @@
 {
   "currency": "EUR",
   "items": [
-    {"id":1,"vendor":"Château Test","emoji":"🏰","description":"Venue — deposit (30%)","amount":9000,"status":"Done","dueDate":"2026-01-15","paidDate":"2026-01-12","method":"Bank transfer","notes":"Contract signed 2026-01-10. Receipt in the shared folder."},
-    {"id":2,"vendor":"Château Test","emoji":"🏰","description":"Venue — balance","amount":21000,"status":"Pending","dueDate":"2026-10-01","method":"Bank transfer","notes":"Due one month before the day. They accept two transfers if the bank caps the amount."},
-    {"id":3,"vendor":"Traiteur Test","emoji":"🍽️","description":"Catering — deposit","amount":6500,"status":"Done","dueDate":"2026-03-01","paidDate":"2026-02-27","method":"Bank transfer","notes":""},
-    {"id":4,"vendor":"Traiteur Test","emoji":"🍽️","description":"Catering — balance (final headcount × menu)","amount":19500,"status":"Pending","dueDate":"2026-10-20","method":"Bank transfer","notes":"Amount to be confirmed once the final headcount is sent (D-15). 158 × 120 + staff + drinks service."},
-    {"id":5,"vendor":"Studio Test Photo","emoji":"📷","description":"Photographer — deposit","amount":1200,"status":"Done","dueDate":"2026-02-15","paidDate":"2026-02-15","method":"Card","notes":""},
-    {"id":6,"vendor":"Studio Test Photo","emoji":"📷","description":"Photographer — balance","amount":2800,"status":"Pending","dueDate":"2026-11-03","method":"Card","notes":"On the day, or within the week — they send a link."},
-    {"id":7,"vendor":"DJ Test","emoji":"🎧","description":"DJ — full fee","amount":1500,"status":"Pending","dueDate":"2026-10-25","method":"Cash","notes":"Wants cash on the day. Withdraw the week before."},
-    {"id":8,"vendor":"Fleurs Test","emoji":"💐","description":"Florist — deposit","amount":800,"status":"Done","dueDate":"2026-04-30","paidDate":"2026-05-02","method":"Bank transfer","notes":"Paid two days late, no issue."},
-    {"id":9,"vendor":"Fleurs Test","emoji":"💐","description":"Florist — balance","amount":1900,"status":"Pending","dueDate":"2026-10-28","method":"Bank transfer","notes":""},
-    {"id":10,"vendor":"Papeterie Test","emoji":"✉️","description":"Stationery — invitations + save-the-dates","amount":640,"status":"Done","dueDate":"2026-03-20","paidDate":"2026-03-18","method":"Card","notes":""},
-    {"id":11,"vendor":"Papeterie Test","emoji":"✉️","description":"Stationery — day-of suite (menus, programmes, place cards)","amount":1150,"status":"Pending","dueDate":"2026-09-30","method":"Card","notes":"Proofs approved; invoice comes with the proof sign-off."},
-    {"id":12,"vendor":"Cars Test","emoji":"🚌","description":"Shuttles — two coaches, both legs","amount":2200,"status":"Pending","dueDate":"2026-10-15","method":"Bank transfer","notes":"Quote valid until end of September."},
-    {"id":13,"vendor":"Maison Test Couture","emoji":"👗","description":"Dress — final fitting balance","amount":900,"status":"Pending","dueDate":"2026-09-05","method":"Card","notes":"Overdue in the fixture on purpose — the page must flag it."},
-    {"id":14,"vendor":"Cave Test","emoji":"🍾","description":"Wine and champagne order","amount":3400,"status":"Pending","dueDate":"2026-10-10","method":"Bank transfer","notes":"Delivery 10 AM on the day; pay on invoice after delivery if they agree."},
-    {"id":15,"vendor":"Mairie Test","emoji":"🏛️","description":"Civil ceremony — room fee","amount":120,"status":"Done","dueDate":"2026-06-01","paidDate":"2026-05-28","method":"Cheque","notes":""}
+    {"id":1,"vendor":"Château Test","emoji":"🏰","description":"Venue — deposit (30%)","amount":9000,"status":"Done","dueDate":"2026-01-15","paidDate":"2026-01-12","payer":"Test couple","method":"Bank transfer","notes":"Contract signed 2026-01-10. Receipt in the shared folder."},
+    {"id":2,"vendor":"Château Test","emoji":"🏰","description":"Venue — balance","amount":21000,"status":"Pending","dueDate":"2026-10-01","payer":"Test couple","method":"Bank transfer","notes":"Due one month before the day. They accept two transfers if the bank caps the amount."},
+    {"id":3,"vendor":"Traiteur Test","emoji":"🍽️","description":"Catering — deposit","amount":6500,"status":"Done","dueDate":"2026-03-01","paidDate":"2026-02-27","payer":"Test couple","method":"Bank transfer","notes":""},
+    {"id":4,"vendor":"Traiteur Test","emoji":"🍽️","description":"Catering — balance (final headcount × menu)","amount":19500,"status":"Pending","dueDate":"2026-10-20","payer":"Test couple","method":"Bank transfer","notes":"Amount to be confirmed once the final headcount is sent (D-15). 158 × 120 + staff + drinks service."},
+    {"id":5,"vendor":"Studio Test Photo","emoji":"📷","description":"Photographer — deposit","amount":1200,"status":"Done","dueDate":"2026-02-15","paidDate":"2026-02-15","payer":"Test couple","method":"Card","notes":""},
+    {"id":6,"vendor":"Studio Test Photo","emoji":"📷","description":"Photographer — balance","amount":2800,"status":"Pending","dueDate":"2026-11-03","payer":"Test couple","method":"Card","notes":"On the day, or within the week — they send a link."},
+    {"id":7,"vendor":"DJ Test","emoji":"🎧","description":"DJ — full fee","amount":1500,"status":"Pending","dueDate":"2026-10-25","payer":"Test couple","method":"Cash","notes":"Wants cash on the day. Withdraw the week before."},
+    {"id":8,"vendor":"Fleurs Test","emoji":"💐","description":"Florist — deposit","amount":800,"status":"Done","dueDate":"2026-04-30","paidDate":"2026-05-02","payer":"Test parents A","method":"Bank transfer","notes":"Paid two days late, no issue."},
+    {"id":9,"vendor":"Fleurs Test","emoji":"💐","description":"Florist — balance","amount":1900,"status":"Pending","dueDate":"2026-10-28","payer":"Test parents A","method":"Bank transfer","notes":""},
+    {"id":10,"vendor":"Papeterie Test","emoji":"✉️","description":"Stationery — invitations + save-the-dates","amount":640,"status":"Done","dueDate":"2026-03-20","paidDate":"2026-03-18","payer":"Test parents A","method":"Card","notes":""},
+    {"id":11,"vendor":"Papeterie Test","emoji":"✉️","description":"Stationery — day-of suite (menus, programmes, place cards)","amount":1150,"status":"Pending","dueDate":"2026-09-30","payer":"Test parents A","method":"Card","notes":"Proofs approved; invoice comes with the proof sign-off."},
+    {"id":12,"vendor":"Cars Test","emoji":"🚌","description":"Shuttles — two coaches, both legs","amount":2200,"status":"Pending","dueDate":"2026-10-15","payer":"Test parents B","method":"Bank transfer","notes":"Quote valid until end of September."},
+    {"id":13,"vendor":"Maison Test Couture","emoji":"👗","description":"Dress — final fitting balance","amount":900,"status":"Pending","dueDate":"2026-09-05","payer":"Test bride","method":"Card","notes":"Overdue in the fixture on purpose — the page must flag it."},
+    {"id":14,"vendor":"Cave Test","emoji":"🍾","description":"Wine and champagne order","amount":3400,"status":"Pending","dueDate":"2026-10-10","payer":"Test couple","method":"Bank transfer","notes":"Delivery 10 AM on the day; pay on invoice after delivery if they agree."},
+    {"id":15,"vendor":"Mairie Test","emoji":"🏛️","description":"Civil ceremony — room fee","amount":120,"status":"Done","dueDate":"2026-06-01","paidDate":"2026-05-28","payer":"Test couple","method":"Cheque","notes":""}
   ],
   "nextId": 16
 }

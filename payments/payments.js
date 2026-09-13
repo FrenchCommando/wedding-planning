@@ -88,7 +88,7 @@ function payRow(it){
   const done=isDone(it);
   const cls=done?"done":urgency(it);
   const date=done?(it.paidDate?`paid ${fmtDay(it.paidDate)}`:"paid"):dueLabel(it.dueDate);
-  const meta=[it.method,it.notes].filter(Boolean).join(" · ");
+  const meta=[it.payer?`paid by ${it.payer}`:"",it.method,it.notes].filter(Boolean).join(" · ");
   return `
     <div class="payRow ${cls}">
       <div class="icon">${esc(emojiFor(it))}</div>
@@ -133,6 +133,7 @@ function renderEdit(){
       <div class="more">
         <label class="f">Due <input class="date-input" data-field="dueDate" type="date" value="${esc(it.dueDate||"")}"></label>
         <label class="f">Paid <input class="date-input" data-field="paidDate" type="date" value="${esc(it.paidDate||"")}"></label>
+        <input data-field="payer" value="${esc(it.payer||"")}" placeholder="Paid by" style="max-width:160px">
         <input data-field="method" value="${esc(it.method||"")}" placeholder="Method (transfer, card, cash)" style="max-width:200px">
         <input data-field="notes" value="${esc(it.notes||"")}" placeholder="Notes">
       </div>
@@ -233,7 +234,7 @@ function setupControls(){
     }
   });
   document.getElementById("addItem").addEventListener("click",()=>{
-    data.items.push({id:(data.nextId||1),vendor:"",emoji:"",description:"",status:"Pending",dueDate:"",method:"",notes:""});
+    data.items.push({id:(data.nextId||1),vendor:"",emoji:"",description:"",status:"Pending",dueDate:"",payer:"",method:"",notes:""});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
     const rows=document.querySelectorAll("#pendingBox .editRow");
