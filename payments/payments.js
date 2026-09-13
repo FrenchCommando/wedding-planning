@@ -79,6 +79,11 @@ function renderSummary(){
     <div class="stat${late?" late":""}"><div class="n">${late?`${late} overdue`:next?fmtDay(next.dueDate):"—"}</div><div class="l">${late?"needs attention":next?"next due · "+esc(next.vendor):"nothing due"}</div></div>`;
 }
 
+// A row's emoji is typed on the row (the vendor's trade: 🏰 venue, 🍽️
+// caterer, 📷 photographer…); blank falls back to a receipt.
+const DEFAULT_EMOJI="🧾";
+function emojiFor(it){return it.emoji||DEFAULT_EMOJI;}
+
 function payRow(it){
   const done=isDone(it);
   const cls=done?"done":urgency(it);
@@ -86,6 +91,7 @@ function payRow(it){
   const meta=[it.method,it.notes].filter(Boolean).join(" · ");
   return `
     <div class="payRow ${cls}">
+      <div class="icon">${esc(emojiFor(it))}</div>
       <div><span class="vendor">${esc(it.vendor)||"(no vendor)"}</span>${it.description?` <span class="desc">${esc(it.description)}</span>`:""}</div>
       <div class="date">${esc(date)}</div>
       <div class="amount">${money(it.amount)}</div>
@@ -118,6 +124,7 @@ function renderEdit(){
   // Rows carry their index into data.items, whichever section they land in.
   const editRow=(it,i)=>`
     <div class="editRow" data-i="${i}">
+      <input class="emoji-input" data-field="emoji" value="${esc(it.emoji||"")}" placeholder="${DEFAULT_EMOJI}" title="Emoji for the row; blank shows a receipt">
       <input class="vendor-input" data-field="vendor" value="${esc(it.vendor)}" placeholder="Vendor">
       <input class="desc-input" data-field="description" value="${esc(it.description||"")}" placeholder="What for (deposit, balance, invoice #)">
       <input class="num-input" data-field="amount" type="number" min="0" step="0.01" value="${it.amount??""}" placeholder="Amount">
@@ -226,7 +233,7 @@ function setupControls(){
     }
   });
   document.getElementById("addItem").addEventListener("click",()=>{
-    data.items.push({id:(data.nextId||1),vendor:"",description:"",status:"Pending",dueDate:"",method:"",notes:""});
+    data.items.push({id:(data.nextId||1),vendor:"",emoji:"",description:"",status:"Pending",dueDate:"",method:"",notes:""});
     data.nextId=(data.nextId||1)+1;
     renderEdit();
     const rows=document.querySelectorAll("#pendingBox .editRow");

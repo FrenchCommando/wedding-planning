@@ -26,6 +26,8 @@ const DEFAULT_STATE = {
     paidDate?: string;
     // Bank transfer, card, cheque, cash — free text.
     method?: string;
+    // Row emoji (the vendor's trade); blank shows a receipt on the page.
+    emoji?: string;
     notes?: string;
   }[],
   nextId: 1,
